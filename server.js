@@ -4,9 +4,10 @@ require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 const path = require('path');
-const mongoose = require('mongoose');
 
 const connectDB = require('./src/config/db');
+const apiRoutes = require('./src/routes/apiRoutes');
+const authRoutes = require('./src/routes/authRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -17,22 +18,14 @@ app.use(helmet());
 // Parse incoming JSON request bodies.
 app.use(express.json({ limit: '10kb' }));
 
-// Backend and database health-check endpoint.
-app.get('/api/health', (req, res) => {
-    const connected = mongoose.connection.readyState === 1;
-
-    res.status(connected ? 200 : 503).json({
-        status: connected ? 'ok' : 'unavailable',
-        service: 'SmartVet API',
-        database: connected ? 'connected' : 'disconnected',
-        timestamp: new Date().toISOString()
-    });
-});
+// Mount authentication and general API routes.
+app.use('/api/auth', authRoutes);
+app.use('/api', apiRoutes);
 
 // Serve the frontend from the public folder.
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Handle requests for unknown routes.
+// Return a JSON response for unknown routes.
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -40,7 +33,7 @@ app.use((req, res) => {
     });
 });
 
-// Handle unexpected errors.
+// Handle errors passed by routes and middleware.
 app.use((err, req, res, next) => {
     console.error('Server error:', err.message);
 
@@ -50,7 +43,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Connect to MongoDB before starting the server.
+// Connect to MongoDB before starting the web server.
 async function startServer() {
     try {
         await connectDB();
@@ -60,7 +53,9 @@ async function startServer() {
             console.log('       SmartVet Backend          ');
             console.log('=================================');
             console.log(`Homepage: http://127.0.0.1:${PORT}`);
+            console.log(`API:      http://127.0.0.1:${PORT}/api`);
             console.log(`Health:   http://127.0.0.1:${PORT}/api/health`);
+            console.log(`Login:    http://127.0.0.1:${PORT}/api/auth/login`);
             console.log('Status: Running');
         });
     } catch (error) {
