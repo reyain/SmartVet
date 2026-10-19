@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SmartVet veterinary pet monitoring and information system">
+    <title>SmartVet | Veterinary Pet Monitoring</title>
+
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/js/app.js" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="SmartVet Home">
+            <span class="brand-mark">S</span>
+            <span>SmartVet</span>
+        </a>
+
+        <div class="connection-indicator" aria-live="polite">
+            <span id="backendDot" class="status-dot"></span>
+            <span id="backendStatus">Checking backend...</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <p class="eyebrow">VETERINARY PET MONITORING AND INFORMATION SYSTEM</p>
+
+            <h1>Better pet care through connected information.</h1>
+
+            <p class="hero-description">
+                SmartVet brings pet registration, digital vaccination records,
+                scheduled feeding, and activity monitoring together in one
+                web-based system for veterinary clinics and pet owners.
+            </p>
+
+            <div class="development-notice">
+                <span class="notice-mark"></span>
+                <span>Initial development preview — features are being built step by step.</span>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">SYSTEM MODULES</p>
+                    <h2>What SmartVet will provide</h2>
+                </div>
+                <p class="section-description">
+                    These modules will be developed and tested in stages.
+                </p>
+            </div>
+
+            <div class="module-grid">
+                <article class="module-card">
+                    <span class="module-number">01</span>
+                    <h3>Pet Registration</h3>
+                    <p>
+                        Allow pet owners to submit pet information for
+                        veterinary review and verification.
+                    </p>
+                    <span class="module-label">Planned module</span>
+                </article>
+
+                <article class="module-card">
+                    <span class="module-number">02</span>
+                    <h3>Digital Vaccination</h3>
+                    <p>
+                        Provide digital vaccination cards, vaccination
+                        history, and due-date reminders.
+                    </p>
+                    <span class="module-label">Planned module</span>
+                </article>
+
+                <article class="module-card">
+                    <span class="module-number">03</span>
+                    <h3>Automatic Feeding</h3>
+                    <p>
+                        Record scheduled feeding events and the measured
+                        weight of food dispensed by the IoT feeder.
+                    </p>
+                    <span class="module-label">Planned module</span>
+                </article>
+
+                <article class="module-card">
+                    <span class="module-number">04</span>
+                    <h3>Activity Monitoring</h3>
+                    <p>
+                        Display activity estimates derived from movement
+                        readings collected by the smart collar.
+                    </p>
+                    <span class="module-label">Planned module</span>
+                </article>
+            </div>
+        </section>
+
+        <section class="connection-panel">
+            <div>
+                <p class="eyebrow">DEVELOPMENT CHECK</p>
+                <h2>Backend connection</h2>
+                <p id="backendDetails" class="connection-description" aria-live="polite">
+                    Checking whether the SmartVet API is responding...
+                </p>
+            </div>
+
+            <button id="checkConnection" class="primary-button" type="button">
+                Check connection
+            </button>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>SmartVet — Veterinary Pet Monitoring and Information System</p>
+        <p>Development environment</p>
+    </footer>
+</body>
+</html>
