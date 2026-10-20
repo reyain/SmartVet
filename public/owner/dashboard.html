@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SmartVet pet owner dashboard">
+    <title>Owner Dashboard | SmartVet</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .dashboard-heading {
+            padding: 40px 0 24px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+            gap: 24px;
+            align-items: start;
+            padding-bottom: 48px;
+        }
+
+        .panel {
+            min-width: 0;
+            padding: 24px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 5px 18px rgb(25 58 38 / 4%);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        .form-field {
+            margin-bottom: 16px;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .form-field input,
+        .form-field select {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #cfdacf;
+            border-radius: 8px;
+            background: white;
+            color: #1b2922;
+            font: inherit;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus {
+            outline: 2px solid #9ac4aa;
+            outline-offset: 1px;
+        }
+
+        .form-help {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .secondary-button {
+            padding: 11px 15px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: white;
+            color: #1b2922;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .primary-button:disabled,
+        .secondary-button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .message {
+            min-height: 24px;
+            overflow-wrap: anywhere;
+        }
+
+        .message.error {
+            color: #a32626;
+        }
+
+        .message.success {
+            color: #17643c;
+        }
+
+        .pet-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .pet-card {
+            padding: 17px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .pet-card h3 {
+            margin: 0 0 6px;
+        }
+
+        .pet-card p {
+            margin: 5px 0;
+            color: var(--muted);
+            overflow-wrap: anywhere;
+        }
+
+        .pet-status {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 9px;
+            border-radius: 7px;
+            background: #f1f2f1;
+            color: #424b45;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .pet-status.approved {
+            background: #e3f5e8;
+            color: #17643c;
+        }
+
+        .pet-status.pending {
+            background: #fff3d6;
+            color: #805800;
+        }
+
+        .pet-status.needs_verification {
+            background: #fde9e7;
+            color: #a32626;
+        }
+
+        .empty-state {
+            padding: 20px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        @media (max-width: 760px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script src="/js/owner-dashboard.js" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="SmartVet Home">
+            <span class="brand-mark">S</span>
+            <span>SmartVet</span>
+        </a>
+
+        <button id="logoutButton" class="primary-button" type="button">
+            Log out
+        </button>
+    </header>
+
+    <main class="container">
+        <section class="dashboard-heading">
+            <p class="eyebrow">PET OWNER PORTAL</p>
+            <h1 id="welcomeHeading">Owner Dashboard</h1>
+            <p class="hero-description">
+                Register your pets and monitor their registration status.
+            </p>
+            <p id="dashboardMessage" class="message" role="status"
+               aria-live="polite">Checking your account...</p>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="panel">
+                <h2>Register a Pet</h2>
+                <p>Submit your pet's information for veterinary review.</p>
+
+                <form id="petRegistrationForm">
+                    <div class="form-field">
+                        <label for="petName">Pet name *</label>
+                        <input id="petName" name="name" type="text"
+                               maxlength="100" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="species">Species *</label>
+                        <select id="species" name="species" required>
+                            <option value="">Select species</option>
+                            <option value="dog">Dog</option>
+                            <option value="cat">Cat</option>
+                            <option value="rabbit">Rabbit</option>
+                            <option value="bird">Bird</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="breed">Breed</label>
+                        <input id="breed" name="breed" type="text"
+                               maxlength="100">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="sex">Sex</label>
+                        <select id="sex" name="sex">
+                            <option value="unknown">Unknown</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="dateOfBirth">Date of birth</label>
+                        <input id="dateOfBirth" name="dateOfBirth"
+                               type="date">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="color">Color / markings</label>
+                        <input id="color" name="color" type="text"
+                               maxlength="100">
+                    </div>
+
+                    <p class="form-help">Fields marked * are required.</p>
+                    <p id="registrationMessage" class="message"
+                       role="status" aria-live="polite"></p>
+
+                    <div class="form-actions">
+                        <button id="registerPetButton" class="primary-button"
+                                type="submit">Submit Registration</button>
+                        <button id="resetFormButton" class="secondary-button"
+                                type="reset">Clear Form</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="panel">
+                <h2>My Registered Pets</h2>
+                <p>Registration status updates when veterinary staff review your submission.</p>
+
+                <div class="form-actions">
+                    <button id="refreshPetsButton" class="secondary-button"
+                            type="button">Refresh List</button>
+                </div>
+
+                <p id="petsMessage" class="message" role="status"
+                   aria-live="polite"></p>
+
+                <div id="petList" class="pet-list">
+                    <div class="empty-state">Loading your pets...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

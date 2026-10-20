@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartVet | Veterinary Dashboard</title>
+  <link rel="stylesheet" href="/css/clinic-dashboard.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>SmartVet</h1>
+      <p>Veterinary Registration Review</p>
+    </div>
+    <button type="button" class="logout" id="logoutButton">Log out</button>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h2 id="welcomeHeading">Veterinary Dashboard</h2>
+      <p class="muted">Review pet registrations, approve verified records, and generate QR identification.</p>
+      <p id="sessionMessage" class="message" role="status">Checking your session...</p>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <div>
+          <h2 style="margin:0 0 6px">Pending Registrations</h2>
+          <p class="muted" style="margin:0">Review each submission before approving it.</p>
+        </div>
+        <button type="button" class="secondary" id="refreshButton">Refresh list</button>
+      </div>
+
+      <p id="listMessage" class="message" role="status" aria-live="polite"></p>
+      <div id="petList"></div>
+    </section>
+  </main>
+
+  <script src="/js/clinic-dashboard.js" defer></script>
+</body>
+</html>

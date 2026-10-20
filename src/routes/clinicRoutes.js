@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
+const QRCode = require('qrcode');
 
 const Pet = require('../models/Pet');
 
@@ -142,7 +143,11 @@ router.patch(
                 });
             }
 
+            // Create a unique, unpredictable QR identifier.
+            const qrIdentifier = crypto.randomBytes(32).toString('hex');
+
             pet.petCode = assignedPetCode;
+            pet.qrIdentifier = qrIdentifier;
             pet.registrationStatus = 'approved';
             pet.verifiedBy = req.user.id;
             pet.verifiedAt = new Date();
@@ -153,8 +158,16 @@ router.patch(
                 pet.verificationNotes = '';
             }
 
-            // QR identifier is created in a later step.
+            // Save the approved registration and its QR identifier.
             await pet.save();
+
+            // Generate a QR image containing only the random identifier.
+            const qrImage = await QRCode.toDataURL(qrIdentifier, {
+                errorCorrectionLevel: 'M',
+                type: 'image/png',
+                margin: 2,
+                width: 300
+            });
 
             return res.status(200).json({
                 success: true,
@@ -165,7 +178,8 @@ router.patch(
                     name: pet.name,
                     species: pet.species,
                     registrationStatus: pet.registrationStatus,
-                    verifiedAt: pet.verifiedAt
+                    verifiedAt: pet.verifiedAt,
+                    qrCodeImage: qrImage
                 }
             });
         } catch (error) {
@@ -258,5 +272,60 @@ router.patch(
         }
     }
 );
+
+
+/**
+ * GET /api/clinic/pets/qr/:identifier
+ * Retrieve an approved pet using its QR identifier.
+ * Access is restricted to authenticated veterinary personnel
+ * by the router-level middleware above.
+ */
+router.get('/pets/qr/:identifier', async (req, res, next) => {
+    const identifier = req.params.identifier;
+
+    if (!/^[a-fA-F0-9]{64}$/.test(identifier)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid QR identifier format.'
+        });
+    }
+
+    try {
+        const pet = await Pet.findOne({
+            qrIdentifier: identifier.toLowerCase(),
+            registrationStatus: 'approved'
+        })
+            .select(
+                'petCode name species breed sex dateOfBirth color registrationStatus verifiedAt'
+            )
+            .lean();
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                message: 'No approved pet was found for this QR code.'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            pet: {
+                id: pet._id.toString(),
+                petCode: pet.petCode,
+                name: pet.name,
+                species: pet.species,
+                breed: pet.breed,
+                sex: pet.sex,
+                dateOfBirth: pet.dateOfBirth || null,
+                color: pet.color,
+                registrationStatus: pet.registrationStatus,
+                verifiedAt: pet.verifiedAt || null
+            }
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
 
 module.exports = router;

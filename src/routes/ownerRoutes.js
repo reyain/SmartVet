@@ -1,6 +1,8 @@
-
 const express = require('express');
+const mongoose = require('mongoose');
+const QRCode = require('qrcode');
 const { body, validationResult } = require('express-validator');
+
 
 const Pet = require('../models/Pet');
 
@@ -194,5 +196,112 @@ router.get('/pets', async (req, res, next) => {
         return next(error);
     }
 });
+
+
+/**
+ * GET /api/owner/pets/qr/:identifier
+ * Retrieve an approved pet only if it belongs to the logged-in owner.
+ */
+router.get('/pets/qr/:identifier', async (req, res, next) => {
+    const identifier = req.params.identifier;
+
+    if (!/^[a-fA-F0-9]{64}$/.test(identifier)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid QR identifier format.'
+        });
+    }
+
+    try {
+        const pet = await Pet.findOne({
+            qrIdentifier: identifier.toLowerCase(),
+            ownerUserId: req.user.id,
+            registrationStatus: 'approved'
+        })
+            .select(
+                'petCode name species breed sex dateOfBirth color registrationStatus verifiedAt'
+            )
+            .lean();
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                message: 'No approved pet was found for this QR code.'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            pet: {
+                id: pet._id.toString(),
+                petCode: pet.petCode,
+                name: pet.name,
+                species: pet.species,
+                breed: pet.breed,
+                sex: pet.sex,
+                dateOfBirth: pet.dateOfBirth || null,
+                color: pet.color,
+                registrationStatus: pet.registrationStatus,
+                verifiedAt: pet.verifiedAt || null
+            }
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+
+/**
+ * GET /api/owner/pets/:petId/qr-image
+ * Generate a QR image for an approved pet belonging to the logged-in owner.
+ */
+router.get('/pets/:petId/qr-image', async (req, res, next) => {
+    const { petId } = req.params;
+
+    if (!mongoose.isValidObjectId(petId)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid pet ID.'
+        });
+    }
+
+    try {
+        const pet = await Pet.findOne({
+            _id: petId,
+            ownerUserId: req.user.id,
+            registrationStatus: 'approved'
+        })
+            .select('+qrIdentifier petCode name species')
+            .lean();
+
+        if (!pet || !pet.qrIdentifier || !pet.petCode) {
+            return res.status(404).json({
+                success: false,
+                message: 'No approved pet with a QR code was found.'
+            });
+        }
+
+        const qrCodeImage = await QRCode.toDataURL(pet.qrIdentifier, {
+            errorCorrectionLevel: 'M',
+            type: 'image/png',
+            margin: 2,
+            width: 300
+        });
+
+        return res.status(200).json({
+            success: true,
+            pet: {
+                petCode: pet.petCode,
+                name: pet.name,
+                species: pet.species
+            },
+            qrCodeImage
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+
 
 module.exports = router;
