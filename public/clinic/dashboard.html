@@ -1,41 +1,374 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartVet | Veterinary Dashboard</title>
-  <link rel="stylesheet" href="/css/clinic-dashboard.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SmartVet veterinary workspace">
+    <title>Veterinary Dashboard | SmartVet</title>
+
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/clinic-dashboard.css">
+    <script src="/js/clinic-dashboard.js" defer></script>
 </head>
 <body>
-  <header>
-    <div>
-      <h1>SmartVet</h1>
-      <p>Veterinary Registration Review</p>
+
+<header class="site-header clinic-header">
+    <a class="brand" href="/" aria-label="SmartVet Home">
+        <span class="brand-mark">S</span>
+        <span>SmartVet</span>
+    </a>
+
+    <div class="header-user">
+        <span class="header-role">Veterinary Workspace</span>
+        <button type="button" class="logout" id="logoutButton">
+            Log out
+        </button>
     </div>
-    <button type="button" class="logout" id="logoutButton">Log out</button>
-  </header>
+</header>
 
-  <main>
-    <section class="intro">
-      <h2 id="welcomeHeading">Veterinary Dashboard</h2>
-      <p class="muted">Review pet registrations, approve verified records, and generate QR identification.</p>
-      <p id="sessionMessage" class="message" role="status">Checking your session...</p>
-    </section>
+<div class="clinic-shell">
 
-    <section class="panel">
-      <div class="toolbar">
-        <div>
-          <h2 style="margin:0 0 6px">Pending Registrations</h2>
-          <p class="muted" style="margin:0">Review each submission before approving it.</p>
+    <aside class="clinic-sidebar">
+        <div class="sidebar-heading">
+            <span class="sidebar-eyebrow">CLINIC WORKSPACE</span>
+            <h2>Veterinary Portal</h2>
+            <p>Pet records and clinical services</p>
         </div>
-        <button type="button" class="secondary" id="refreshButton">Refresh list</button>
-      </div>
 
-      <p id="listMessage" class="message" role="status" aria-live="polite"></p>
-      <div id="petList"></div>
-    </section>
-  </main>
+        <nav class="clinic-navigation" aria-label="Veterinary navigation">
+            <button
+                type="button"
+                class="nav-item active"
+                data-view="overview"
+                aria-current="page">
+                <span class="nav-icon" aria-hidden="true">⌂</span>
+                <span>Overview</span>
+            </button>
 
-  <script src="/js/clinic-dashboard.js" defer></script>
+            <button
+                type="button"
+                class="nav-item"
+                data-view="pending">
+                <span class="nav-icon" aria-hidden="true">▤</span>
+                <span>Pending Registrations</span>
+                <span class="nav-count" id="sidebarPendingCount">—</span>
+            </button>
+
+            <button
+                type="button"
+                class="nav-item"
+                data-view="vaccinations">
+                <span class="nav-icon" aria-hidden="true">✚</span>
+                <span>Vaccination Records</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="sidebar-status-dot"></span>
+            <div>
+                <strong>System connected</strong>
+                <p>SmartVet Clinic</p>
+            </div>
+        </div>
+    </aside>
+
+    <main class="clinic-main">
+
+        <!-- OVERVIEW -->
+        <section
+            class="clinic-view is-active"
+            id="overviewSection"
+            data-page="overview">
+
+            <div class="page-heading">
+                <div>
+                    <p class="page-eyebrow">CLINIC OVERVIEW</p>
+                    <h1 id="welcomeHeading">Welcome, Staff</h1>
+                    <p class="muted">
+                        Review registrations and keep pet vaccination
+                        information organized in one place.
+                    </p>
+                </div>
+
+                <span class="session-badge" id="sessionBadge">
+                    Verifying session
+                </span>
+            </div>
+
+            <p
+                id="sessionMessage"
+                class="message"
+                role="status"
+                aria-live="polite">
+                Checking your session...
+            </p>
+
+            <div class="overview-stats">
+                <article class="stat-card">
+                    <span class="stat-label">Pending registrations</span>
+                    <strong id="pendingCount">—</strong>
+                    <span class="stat-description">
+                        Awaiting veterinary review
+                    </span>
+                </article>
+
+                <article class="stat-card">
+                    <span class="stat-label">Approved pets</span>
+                    <strong id="approvedCount">—</strong>
+                    <span class="stat-description">
+                        Available for record access
+                    </span>
+                </article>
+
+                <article class="stat-card">
+                    <span class="stat-label">Clinical tools</span>
+                    <strong class="stat-word">Available</strong>
+                    <span class="stat-description">
+                        QR identification and vaccination records
+                    </span>
+                </article>
+            </div>
+
+            <section class="workspace-panel">
+                <div class="section-heading">
+                    <div>
+                        <h2>Quick Actions</h2>
+                        <p class="muted">
+                            Open the workspace you need.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="quick-action-grid">
+                    <button
+                        type="button"
+                        class="quick-action"
+                        data-view-target="pending">
+                        <span class="quick-action-icon">▤</span>
+                        <span>
+                            <strong>Review Registrations</strong>
+                            <small>
+                                Approve pets or request additional verification.
+                            </small>
+                        </span>
+                        <span class="quick-arrow" aria-hidden="true">→</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="quick-action"
+                        data-view-target="vaccinations">
+                        <span class="quick-action-icon">✚</span>
+                        <span>
+                            <strong>Vaccination Records</strong>
+                            <small>
+                                Record a vaccination or review history.
+                            </small>
+                        </span>
+                        <span class="quick-arrow" aria-hidden="true">→</span>
+                    </button>
+                </div>
+            </section>
+        </section>
+
+        <!-- PENDING REGISTRATIONS -->
+        <section
+            class="clinic-view"
+            id="pendingSection"
+            data-page="pending"
+            hidden>
+
+            <div class="page-heading">
+                <div>
+                    <p class="page-eyebrow">PET REGISTRATION</p>
+                    <h1>Pending Registrations</h1>
+                    <p class="muted">
+                        Review submitted pet information before approval.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="secondary"
+                    id="refreshButton">
+                    Refresh list
+                </button>
+            </div>
+
+            <p
+                id="listMessage"
+                class="message"
+                role="status"
+                aria-live="polite">
+            </p>
+
+            <div id="approvalResultContainer"></div>
+
+            <div id="petList" class="clinic-pet-list">
+                <div class="empty">
+                    Loading pending registrations...
+                </div>
+            </div>
+        </section>
+
+        <!-- VACCINATION RECORDS -->
+        <section
+            class="clinic-view"
+            id="vaccinationSection"
+            data-page="vaccinations"
+            hidden>
+
+            <div class="page-heading">
+                <div>
+                    <p class="page-eyebrow">CLINICAL RECORDS</p>
+                    <h1>Vaccination Records</h1>
+                    <p class="muted">
+                        Record vaccinations for approved pets and review
+                        their vaccination history.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="secondary"
+                    id="refreshApprovedPetsButton">
+                    Refresh approved pets
+                </button>
+            </div>
+
+            <section class="workspace-panel vaccination-workspace">
+                <div class="form-group">
+                    <label for="approvedPetSelect">Select approved pet</label>
+
+                    <select id="approvedPetSelect" required>
+                        <option value="">Loading approved pets...</option>
+                    </select>
+                </div>
+
+                <p id="selectedPetInfo" class="muted"></p>
+
+                <form id="vaccinationForm">
+                    <h2 class="form-section-heading">
+                        Record a Vaccination
+                    </h2>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="vaccineName">Vaccine name *</label>
+                            <input
+                                type="text"
+                                id="vaccineName"
+                                name="vaccineName"
+                                minlength="2"
+                                maxlength="150"
+                                placeholder="e.g. Anti-Rabies"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="administeredDate">
+                                Date administered *
+                            </label>
+                            <input
+                                type="date"
+                                id="administeredDate"
+                                name="administeredDate"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nextDueDate">Next due date</label>
+                            <input
+                                type="date"
+                                id="nextDueDate"
+                                name="nextDueDate">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="batchNumber">Batch or lot number</label>
+                            <input
+                                type="text"
+                                id="batchNumber"
+                                name="batchNumber"
+                                maxlength="100"
+                                placeholder="Optional">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manufacturer">Manufacturer</label>
+                            <input
+                                type="text"
+                                id="manufacturer"
+                                name="manufacturer"
+                                maxlength="150"
+                                placeholder="Optional">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dosage">Dosage</label>
+                            <input
+                                type="text"
+                                id="dosage"
+                                name="dosage"
+                                maxlength="100"
+                                placeholder="As recorded by veterinary staff">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="vaccinationNotes">Notes</label>
+                            <textarea
+                                id="vaccinationNotes"
+                                name="notes"
+                                rows="3"
+                                maxlength="2000"
+                                placeholder="Optional vaccination notes"></textarea>
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="primary"
+                        id="saveVaccinationButton">
+                        Save Vaccination
+                    </button>
+
+                    <p
+                        id="vaccinationMessage"
+                        class="message"
+                        role="status"
+                        aria-live="polite">
+                    </p>
+                </form>
+            </section>
+
+            <section class="workspace-panel history-section">
+                <div class="section-heading">
+                    <div>
+                        <h2>Vaccination History</h2>
+                        <p class="muted">
+                            The latest administration dates appear first.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="secondary"
+                        id="refreshHistoryButton">
+                        Refresh history
+                    </button>
+                </div>
+
+                <div id="vaccinationHistory">
+                    <p class="muted">
+                        Select an approved pet to view its history.
+                    </p>
+                </div>
+            </section>
+        </section>
+
+    </main>
+</div>
+
 </body>
 </html>

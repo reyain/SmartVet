@@ -6,12 +6,20 @@ const helmet = require('helmet');
 const path = require('path');
 
 const connectDB = require('./src/config/db');
+const cron = require('node-cron');
+
+const {
+    generateVaccinationReminders
+} = require('./src/services/vaccinationReminderService');
 
 const apiRoutes = require('./src/routes/apiRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const clinicRoutes = require('./src/routes/clinicRoutes');
 const ownerRoutes = require('./src/routes/ownerRoutes');
+const deviceRoutes = require('./src/routes/deviceRoutes');
+const feedingScheduleRoutes = require('./src/routes/feedingScheduleRoutes');
+const iotRoutes = require('./src/routes/iotRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -24,6 +32,9 @@ app.use('/api/auth', authRoutes);
 
 // Role-protected API areas.
 app.use('/api/admin', adminRoutes);
+app.use('/api/clinic/devices', deviceRoutes);
+app.use('/api/clinic/feeding-schedules', feedingScheduleRoutes);
+app.use('/api/iot', iotRoutes);
 app.use('/api/clinic', clinicRoutes);
 app.use('/api/owner', ownerRoutes);
 
@@ -54,6 +65,46 @@ app.use((err, req, res, next) => {
 async function startServer() {
     try {
         await connectDB();
+
+        
+        // Run vaccination reminder scans and log results without
+        // allowing a scan failure to stop the web server.
+        async function runReminderScan(trigger) {
+            try {
+                const result = await generateVaccinationReminders();
+
+                console.log(
+                    `[Vaccination reminders] ${trigger} scan completed:`,
+                    result
+                );
+            } catch (error) {
+                console.error(
+                    `[Vaccination reminders] ${trigger} scan failed:`,
+                    error.message
+                );
+            }
+        }
+
+        // Run the reminder service every day at 8:00 AM
+        // using Philippine local time.
+        cron.schedule(
+            '0 8 * * *',
+            async () => {
+                await runReminderScan('Scheduled');
+            },
+            {
+                timezone: 'Asia/Manila'
+            }
+        );
+
+        console.log(
+            'Vaccination reminder schedule: daily at 8:00 AM (Asia/Manila)'
+        );
+
+        // Also check for reminders immediately after connecting
+        // to MongoDB, rather than waiting for the next morning.
+        void runReminderScan('Startup');
+
 
         app.listen(PORT, '127.0.0.1', () => {
             console.log('=================================');

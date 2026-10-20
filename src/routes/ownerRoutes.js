@@ -5,6 +5,8 @@ const { body, validationResult } = require('express-validator');
 
 
 const Pet = require('../models/Pet');
+const VaccinationRecord = require('../models/VaccinationRecord');
+const Notification = require('../models/Notification');
 
 const {
     requireAuth,
@@ -166,13 +168,14 @@ router.post(
 
 // GET /api/owner/pets
 // Return only pets belonging to the authenticated owner.
+
 router.get('/pets', async (req, res, next) => {
     try {
         const pets = await Pet.find({
             ownerUserId: req.user.id
         })
             .select(
-                'name species breed sex dateOfBirth color registrationStatus createdAt'
+                'petCode name species breed sex dateOfBirth color registrationStatus createdAt'
             )
             .sort({ createdAt: -1 })
             .lean();
@@ -189,6 +192,12 @@ router.get('/pets', async (req, res, next) => {
                 dateOfBirth: pet.dateOfBirth || null,
                 color: pet.color,
                 registrationStatus: pet.registrationStatus,
+
+                // Show the official Pet ID only after approval.
+                ...(pet.registrationStatus === 'approved' && pet.petCode
+                    ? { petCode: pet.petCode }
+                    : {}),
+
                 createdAt: pet.createdAt
             }))
         });
@@ -196,6 +205,7 @@ router.get('/pets', async (req, res, next) => {
         return next(error);
     }
 });
+
 
 
 /**
@@ -301,6 +311,188 @@ router.get('/pets/:petId/qr-image', async (req, res, next) => {
         return next(error);
     }
 });
+
+
+/**
+ * GET /api/owner/pets/:petId/vaccinations
+ * View vaccination history for an approved pet owned by the logged-in owner.
+ */
+router.get('/pets/:petId/vaccinations', async (req, res, next) => {
+    const { petId } = req.params;
+
+    if (!mongoose.isValidObjectId(petId)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid pet ID.'
+        });
+    }
+
+    try {
+        const pet = await Pet.findOne({
+            _id: petId,
+            ownerUserId: req.user.id,
+            registrationStatus: 'approved'
+        })
+            .select(
+                'petCode name species breed sex dateOfBirth color registrationStatus verifiedAt'
+            )
+            .lean();
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                message: 'Approved pet not found in your account.'
+            });
+        }
+
+        const records = await VaccinationRecord.find({
+            petId: pet._id
+        })
+            .populate('administeredBy', 'fullName')
+            .sort({ administeredDate: -1, createdAt: -1 })
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            pet: {
+                id: pet._id.toString(),
+                petCode: pet.petCode,
+                name: pet.name,
+                species: pet.species,
+                breed: pet.breed,
+                sex: pet.sex,
+                dateOfBirth: pet.dateOfBirth || null,
+                color: pet.color,
+                registrationStatus: pet.registrationStatus,
+                verifiedAt: pet.verifiedAt || null
+            },
+            count: records.length,
+            vaccinations: records.map((record) => ({
+                id: record._id.toString(),
+                vaccineName: record.vaccineName,
+                administeredDate: record.administeredDate,
+                nextDueDate: record.nextDueDate || null,
+                batchNumber: record.batchNumber,
+                manufacturer: record.manufacturer,
+                dosage: record.dosage,
+                notes: record.notes,
+                administeredBy: record.administeredBy
+                    ? record.administeredBy.fullName
+                    : 'Unknown',
+                createdAt: record.createdAt
+            }))
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+
+
+/**
+ * GET /api/owner/notifications
+ * Retrieve notifications belonging only to the logged-in owner.
+ */
+router.get('/notifications', async (req, res, next) => {
+    try {
+        const [notifications, unreadCount] = await Promise.all([
+            Notification.find({
+                userId: req.user.id
+            })
+                .select(
+                    'type title message petId relatedRecordType relatedRecordId priority readAt createdAt'
+                )
+                .populate('petId', 'name petCode')
+                .sort({ createdAt: -1 })
+                .limit(50)
+                .lean(),
+
+            Notification.countDocuments({
+                userId: req.user.id,
+                readAt: null
+            })
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            unreadCount,
+            count: notifications.length,
+            notifications: notifications.map((notification) => ({
+                id: notification._id.toString(),
+                type: notification.type,
+                title: notification.title,
+                message: notification.message,
+                priority: notification.priority,
+                read: Boolean(notification.readAt),
+                readAt: notification.readAt || null,
+                createdAt: notification.createdAt,
+                pet: notification.petId
+                    ? {
+                        name: notification.petId.name,
+                        petCode: notification.petId.petCode
+                    }
+                    : null,
+                relatedRecordType:
+                    notification.relatedRecordType || null,
+                relatedRecordId:
+                    notification.relatedRecordId
+                        ? notification.relatedRecordId.toString()
+                        : null
+            }))
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+/**
+ * PATCH /api/owner/notifications/:notificationId/read
+ * Mark one notification belonging to the logged-in owner as read.
+ */
+router.patch(
+    '/notifications/:notificationId/read',
+    async (req, res, next) => {
+        const { notificationId } = req.params;
+
+        if (!mongoose.isValidObjectId(notificationId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid notification ID.'
+            });
+        }
+
+        try {
+            const notification = await Notification.findOne({
+                _id: notificationId,
+                userId: req.user.id
+            });
+
+            if (!notification) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Notification not found.'
+                });
+            }
+
+            if (!notification.readAt) {
+                notification.readAt = new Date();
+                await notification.save();
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Notification marked as read.',
+                notification: {
+                    id: notification._id.toString(),
+                    read: true,
+                    readAt: notification.readAt
+                }
+            });
+        } catch (error) {
+            return next(error);
+        }
+    }
+);
 
 
 

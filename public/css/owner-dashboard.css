@@ -1,0 +1,644 @@
+
+/* ==========================================
+   SMARTVET OWNER DASHBOARD
+   DARKER GLASSMORPHISM THEME
+   ========================================== */
+
+:root {
+    --glass-text: #193b55;
+    --glass-heading: #173d5c;
+    --glass-muted: #486a86;
+    --glass-blue: #278ee1;
+    --glass-blue-dark: #286bc0;
+    --glass-green: #08785e;
+    --glass-border: rgba(255, 255, 255, 0.72);
+    --glass-surface: rgba(192, 217, 239, 0.52);
+    --glass-shadow: 0 12px 32px rgba(34, 76, 118, 0.13);
+}
+
+/* Global owner-page background */
+body {
+    min-height: 100vh;
+    color: var(--glass-text);
+    background:
+        radial-gradient(
+            ellipse at 10% 8%,
+            rgba(84, 157, 220, 0.52),
+            transparent 38%
+        ),
+        radial-gradient(
+            ellipse at 88% 12%,
+            rgba(132, 163, 226, 0.44),
+            transparent 38%
+        ),
+        radial-gradient(
+            ellipse at 75% 70%,
+            rgba(83, 185, 178, 0.28),
+            transparent 42%
+        ),
+        linear-gradient(
+            135deg,
+            #d2e5f5 0%,
+            #d0e4e8 48%,
+            #dfe2f6 100%
+        );
+    background-attachment: fixed;
+}
+
+/* Header */
+.site-header {
+    position: relative;
+    z-index: 2;
+    min-height: 76px;
+    padding: 14px max(24px, calc((100% - 1240px) / 2));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    background: rgba(183, 210, 235, 0.66);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.78);
+    box-shadow: 0 5px 22px rgba(34, 76, 118, 0.09);
+    backdrop-filter: blur(20px) saturate(145%);
+    -webkit-backdrop-filter: blur(20px) saturate(145%);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    color: var(--glass-heading);
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+    color: white;
+    background: linear-gradient(145deg, #35b4e6, #3475eb);
+    box-shadow: 0 5px 15px rgba(44, 116, 205, 0.22);
+}
+
+.site-header .primary-button {
+    padding: 11px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    color: white;
+    background: linear-gradient(135deg, #287fbc, #315fd0);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Main desktop layout:
+   Welcome       | Notifications
+   Registration  | Registered pets */
+main.container {
+    width: min(1240px, calc(100% - 40px));
+    max-width: 1240px;
+    margin: 0 auto;
+    padding-top: 28px;
+    padding-bottom: 55px;
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    align-items: stretch;
+    gap: 22px;
+}
+
+/* Welcome panel */
+.dashboard-heading {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 27px;
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(76, 151, 207, 0.56),
+            rgba(199, 223, 243, 0.58)
+        );
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(20px) saturate(145%);
+    -webkit-backdrop-filter: blur(20px) saturate(145%);
+}
+
+.dashboard-heading .eyebrow {
+    margin: 0 0 12px;
+    color: #155b84;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.dashboard-heading h1 {
+    margin: 12px 0;
+    color: var(--glass-heading);
+    font-size: clamp(1.8rem, 2.5vw, 2.5rem);
+    line-height: 1.2;
+    letter-spacing: -0.7px;
+}
+
+.dashboard-heading .hero-description {
+    max-width: 580px;
+    margin: 15px 0;
+    color: #355c7a;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+/* Glass panels */
+.panel,
+.owner-notifications-panel {
+    min-width: 0;
+    padding: 23px;
+    border: 1px solid var(--glass-border);
+    border-radius: 19px;
+    background: var(--glass-surface);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(20px) saturate(145%);
+    -webkit-backdrop-filter: blur(20px) saturate(145%);
+}
+
+.panel h2,
+.owner-notifications-panel h2 {
+    margin-top: 0;
+    color: var(--glass-heading);
+    font-size: 1.28rem;
+}
+
+.panel > p {
+    color: var(--glass-muted);
+}
+
+/* Notifications on the upper-right */
+.owner-notifications-panel {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+    margin: 0;
+}
+
+.notifications-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.notifications-toolbar h2 {
+    margin: 0 0 5px;
+}
+
+.form-help {
+    margin: 5px 0 0;
+    color: var(--glass-muted);
+    font-size: 0.84rem;
+}
+
+/* Form and pet list on the next row */
+.dashboard-grid {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    align-items: start;
+    gap: 20px;
+    min-width: 0;
+    padding: 0;
+}
+
+.dashboard-grid > .panel {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Form layout */
+.form-field {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 16px;
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 7px;
+    color: #274d6a;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    border-radius: 10px;
+    background: rgba(220, 235, 248, 0.69);
+    color: var(--glass-text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    box-shadow: inset 0 1px 3px rgba(40, 85, 125, 0.04);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+    color: #6586a2;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: rgba(45, 132, 204, 0.85);
+    background: rgba(243, 249, 255, 0.93);
+    box-shadow: 0 0 0 3px rgba(61, 144, 219, 0.16);
+}
+
+.form-field textarea {
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+/* Buttons */
+.primary-button,
+.secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primary-button {
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    background: linear-gradient(135deg, #2d9fda, #356be4 70%, #7762e9);
+    box-shadow: 0 5px 14px rgba(48, 113, 211, 0.2);
+}
+
+.secondary-button {
+    color: #285c81;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: rgba(202, 224, 242, 0.68);
+}
+
+.primary-button:hover:not(:disabled),
+.secondary-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 17px rgba(40, 85, 130, 0.14);
+}
+
+button:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+}
+
+button:focus-visible,
+a:focus-visible {
+    outline: 3px solid #267fc5;
+    outline-offset: 3px;
+}
+
+/* Status messages */
+.message {
+    min-height: 20px;
+    overflow-wrap: anywhere;
+}
+
+.message.success {
+    color: #08785e;
+}
+
+.message.error {
+    color: #a3263b;
+}
+
+/* Registered pet list */
+.pet-list {
+    display: grid;
+    gap: 13px;
+    min-width: 0;
+    margin-top: 14px;
+}
+
+.pet-card {
+    min-width: 0;
+    padding: 17px;
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    border-radius: 15px;
+    background: rgba(209, 229, 245, 0.61);
+    box-shadow: 0 5px 16px rgba(49, 93, 135, 0.06);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.pet-card:hover {
+    background: rgba(230, 242, 251, 0.80);
+    transform: translateY(-1px);
+}
+
+.pet-card h3 {
+    margin: 0 0 7px;
+    color: #214e75;
+    font-size: 1.06rem;
+}
+
+.pet-card p {
+    margin: 5px 0;
+    color: var(--glass-muted);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.pet-status {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 20px;
+    background: rgba(215, 224, 230, 0.65);
+    color: #415b70;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.pet-status.approved {
+    background: rgba(111, 219, 178, 0.39);
+    color: #08785e;
+}
+
+.pet-status.pending {
+    background: rgba(255, 215, 121, 0.42);
+    color: #815b0b;
+}
+
+.pet-status.needs_verification {
+    background: rgba(255, 151, 151, 0.35);
+    color: #9c3434;
+}
+
+.empty-state {
+    padding: 20px;
+    border: 1px dashed rgba(255, 255, 255, 0.88);
+    border-radius: 12px;
+    background: rgba(229, 240, 249, 0.42);
+    color: var(--glass-muted);
+    text-align: center;
+}
+
+/* Pet ID and QR code */
+.pet-code {
+    overflow-wrap: anywhere;
+}
+
+.pet-qr-section {
+    min-width: 0;
+    margin-top: 15px;
+    padding-top: 13px;
+    border-top: 1px solid rgba(255, 255, 255, 0.82);
+}
+
+.pet-qr-section h4 {
+    color: #275a7d;
+}
+
+.pet-qr-section img {
+    display: block;
+    width: 200px;
+    max-width: 100%;
+    height: auto;
+    margin: 12px 0;
+    padding: 7px;
+    border: 1px solid var(--glass-border);
+    border-radius: 11px;
+    background: white;
+}
+
+.pet-qr-section .secondary-button {
+    margin-top: 5px;
+}
+
+/* Digital vaccination card */
+.vaccination-toggle {
+    width: 100%;
+    margin-top: 14px;
+}
+
+.owner-vaccination-card {
+    min-width: 0;
+    margin-top: 14px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    border-radius: 14px;
+    background: rgba(196, 222, 242, 0.66);
+    overflow-wrap: anywhere;
+}
+
+.owner-vaccination-card[hidden] {
+    display: none !important;
+}
+
+.owner-vaccination-card h4 {
+    margin: 0 0 12px;
+    color: #214e75;
+}
+
+.owner-vaccination-card h4:not(:first-child) {
+    margin-top: 20px;
+}
+
+.owner-vaccination-entry {
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    background: rgba(229, 240, 249, 0.76);
+}
+
+.owner-vaccination-entry h5 {
+    margin: 0 0 10px;
+    color: #23577c;
+}
+
+.owner-vaccination-entry p {
+    margin: 6px 0;
+    color: var(--glass-muted);
+    overflow-wrap: anywhere;
+}
+
+/* Notifications */
+.notification-list {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    margin-top: 16px;
+}
+
+.owner-notification-card {
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    border-radius: 14px;
+    background: rgba(211, 229, 245, 0.67);
+    overflow-wrap: anywhere;
+}
+
+.owner-notification-card.is-unread {
+    border-left: 4px solid #287fc3;
+    background: rgba(177, 215, 242, 0.68);
+}
+
+.owner-notification-card h3 {
+    margin: 0 0 9px;
+    color: #214f75;
+    font-size: 1rem;
+}
+
+.owner-notification-card .notification-message {
+    margin: 8px 0;
+    color: #365d7c;
+    line-height: 1.6;
+}
+
+.owner-notification-card .notification-meta {
+    margin: 8px 0;
+    color: var(--glass-muted);
+    font-size: 0.84rem;
+}
+
+.owner-notification-card button {
+    margin-top: 10px;
+}
+
+.notification-priority {
+    display: inline-block;
+    margin: 4px 0 10px;
+    padding: 4px 8px;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.notification-priority.high {
+    color: #963c3c;
+    background: rgba(255, 167, 167, 0.42);
+}
+
+.notification-read-label {
+    display: inline-block;
+    margin-top: 8px;
+    color: var(--glass-muted);
+    font-size: 0.84rem;
+}
+
+/* Responsive tablet layout */
+@media (max-width: 980px) {
+    main.container {
+        width: calc(100% - 32px);
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    .dashboard-heading,
+    .owner-notifications-panel,
+    .dashboard-grid {
+        grid-column: 1;
+    }
+
+    .dashboard-heading {
+        grid-row: 1;
+    }
+
+    .owner-notifications-panel {
+        grid-row: 2;
+    }
+
+    .dashboard-grid {
+        grid-row: 3;
+        grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    }
+}
+
+/* Responsive phone layout */
+@media (max-width: 680px) {
+    main.container {
+        width: calc(100% - 24px);
+        padding-top: 16px;
+        padding-bottom: 30px;
+        gap: 15px;
+    }
+
+    .dashboard-heading,
+    .owner-notifications-panel,
+    .panel {
+        padding: 17px;
+        border-radius: 16px;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 15px;
+    }
+
+    .dashboard-heading h1 {
+        font-size: 1.85rem;
+    }
+
+    .notifications-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .notifications-toolbar button,
+    .form-actions button {
+        width: 100%;
+    }
+
+    .site-header {
+        padding: 12px 15px;
+    }
+
+    .brand {
+        font-size: 1.15rem;
+    }
+}
+
+/* Fallback for browsers without glass blur support */
+@supports not (backdrop-filter: blur(10px)) {
+    .site-header,
+    .dashboard-heading,
+    .owner-notifications-panel,
+    .panel,
+    .pet-card,
+    .owner-notification-card,
+    .owner-vaccination-card,
+    .owner-vaccination-entry {
+        background: rgba(218, 234, 247, 0.95);
+    }
+}

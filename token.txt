@@ -7,3 +7,6 @@ node .\tests\login-api-smoke-test.js
 
 // pag create ini hin user ig paste ha terminal
 node .\scripts\createUser.js
+
+// pag kuha han token han owner or staff ig paste ha browser console
+sessionStorage.getItem('smartvetAccessToken')

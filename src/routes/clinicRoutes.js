@@ -6,6 +6,7 @@ const { body, validationResult } = require('express-validator');
 const QRCode = require('qrcode');
 
 const Pet = require('../models/Pet');
+const VaccinationRecord = require('../models/VaccinationRecord');
 
 const {
     requireAuth,
@@ -280,6 +281,46 @@ router.patch(
  * Access is restricted to authenticated veterinary personnel
  * by the router-level middleware above.
  */
+
+// 4. List approved pets for vaccination recording.
+router.get('/pets/approved', async (req, res, next) => {
+    try {
+        const pets = await Pet.find({
+            registrationStatus: 'approved'
+        })
+            .select(
+                'petCode name species breed sex ownerUserId verifiedAt'
+            )
+            .populate('ownerUserId', 'fullName email')
+            .sort({ name: 1 })
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            count: pets.length,
+            pets: pets.map((pet) => ({
+                id: pet._id.toString(),
+                petCode: pet.petCode,
+                name: pet.name,
+                species: pet.species,
+                breed: pet.breed,
+                sex: pet.sex,
+                owner: pet.ownerUserId
+                    ? {
+                        id: pet.ownerUserId._id.toString(),
+                        fullName: pet.ownerUserId.fullName,
+                        email: pet.ownerUserId.email
+                    }
+                    : null,
+                verifiedAt: pet.verifiedAt || null
+            }))
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+
 router.get('/pets/qr/:identifier', async (req, res, next) => {
     const identifier = req.params.identifier;
 
@@ -327,5 +368,227 @@ router.get('/pets/qr/:identifier', async (req, res, next) => {
     }
 });
 
+
+// 5. Record a vaccination for an approved pet.
+router.post(
+    '/pets/:petId/vaccinations',
+    [
+        body('vaccineName')
+            .isString()
+            .withMessage('Vaccine name is required.')
+            .bail()
+            .trim()
+            .notEmpty()
+            .withMessage('Vaccine name is required.')
+            .bail()
+            .isLength({ min: 2, max: 150 })
+            .withMessage('Vaccine name must be 2 to 150 characters.'),
+
+        body('administeredDate')
+            .isISO8601({ strict: true })
+            .withMessage('Administration date must use YYYY-MM-DD format.')
+            .bail()
+            .custom((value) => {
+                const date = new Date(`${value}T00:00:00.000Z`);
+                const today = new Date();
+                today.setUTCHours(0, 0, 0, 0);
+
+                return date <= today;
+            })
+            .withMessage('Administration date cannot be in the future.'),
+
+        body('nextDueDate')
+            .optional({ values: 'falsy' })
+            .isISO8601({ strict: true })
+            .withMessage('Next due date must use YYYY-MM-DD format.')
+            .bail()
+            .custom((value, { req }) => {
+                return value >= req.body.administeredDate;
+            })
+            .withMessage(
+                'Next due date cannot be earlier than the administration date.'
+            ),
+
+        body('batchNumber')
+            .optional()
+            .isString()
+            .withMessage('Batch number must be text.')
+            .bail()
+            .trim()
+            .isLength({ max: 100 })
+            .withMessage('Batch number cannot exceed 100 characters.'),
+
+        body('manufacturer')
+            .optional()
+            .isString()
+            .withMessage('Manufacturer must be text.')
+            .bail()
+            .trim()
+            .isLength({ max: 150 })
+            .withMessage('Manufacturer cannot exceed 150 characters.'),
+
+        body('dosage')
+            .optional()
+            .isString()
+            .withMessage('Dosage must be text.')
+            .bail()
+            .trim()
+            .isLength({ max: 100 })
+            .withMessage('Dosage cannot exceed 100 characters.'),
+
+        body('notes')
+            .optional()
+            .isString()
+            .withMessage('Notes must be text.')
+            .bail()
+            .trim()
+            .isLength({ max: 2000 })
+            .withMessage('Notes cannot exceed 2000 characters.')
+    ],
+    async (req, res, next) => {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please correct the vaccination details.',
+                errors: errors.array().map((error) => ({
+                    field: error.path,
+                    message: error.msg
+                }))
+            });
+        }
+
+        const { petId } = req.params;
+
+        if (!mongoose.isValidObjectId(petId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid pet ID.'
+            });
+        }
+
+        try {
+            const pet = await Pet.findOne({
+                _id: petId,
+                registrationStatus: 'approved'
+            }).select('_id name petCode');
+
+            if (!pet) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Approved pet not found.'
+                });
+            }
+
+            const vaccinationData = {
+                petId: pet._id,
+                vaccineName: req.body.vaccineName.trim(),
+                administeredDate: new Date(
+                    `${req.body.administeredDate}T00:00:00.000Z`
+                ),
+                administeredBy: req.user.id,
+                batchNumber: req.body.batchNumber?.trim() || '',
+                manufacturer: req.body.manufacturer?.trim() || '',
+                dosage: req.body.dosage?.trim() || '',
+                notes: req.body.notes?.trim() || ''
+            };
+
+            if (req.body.nextDueDate) {
+                vaccinationData.nextDueDate = new Date(
+                    `${req.body.nextDueDate}T00:00:00.000Z`
+                );
+            }
+
+            const record = await VaccinationRecord.create(vaccinationData);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Vaccination record saved successfully.',
+                vaccination: {
+                    id: record._id.toString(),
+                    petId: record.petId.toString(),
+                    vaccineName: record.vaccineName,
+                    administeredDate: record.administeredDate,
+                    nextDueDate: record.nextDueDate || null,
+                    batchNumber: record.batchNumber,
+                    manufacturer: record.manufacturer,
+                    dosage: record.dosage,
+                    notes: record.notes,
+                    administeredBy: req.user.id,
+                    createdAt: record.createdAt
+                }
+            });
+        } catch (error) {
+            if (error.name === 'ValidationError') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'The vaccination record failed validation.'
+                });
+            }
+
+            return next(error);
+        }
+    }
+);
+
+// 6. View the vaccination history of an approved pet.
+router.get('/pets/:petId/vaccinations', async (req, res, next) => {
+    const { petId } = req.params;
+
+    if (!mongoose.isValidObjectId(petId)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid pet ID.'
+        });
+    }
+
+    try {
+        const pet = await Pet.findOne({
+            _id: petId,
+            registrationStatus: 'approved'
+        }).select('_id name petCode');
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                message: 'Approved pet not found.'
+            });
+        }
+
+        const records = await VaccinationRecord.find({
+            petId: pet._id
+        })
+            .populate('administeredBy', 'fullName')
+            .sort({ administeredDate: -1, createdAt: -1 })
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            pet: {
+                id: pet._id.toString(),
+                petCode: pet.petCode,
+                name: pet.name
+            },
+            count: records.length,
+            vaccinations: records.map((record) => ({
+                id: record._id.toString(),
+                vaccineName: record.vaccineName,
+                administeredDate: record.administeredDate,
+                nextDueDate: record.nextDueDate || null,
+                batchNumber: record.batchNumber,
+                manufacturer: record.manufacturer,
+                dosage: record.dosage,
+                notes: record.notes,
+                administeredBy: record.administeredBy
+                    ? record.administeredBy.fullName
+                    : 'Unknown',
+                createdAt: record.createdAt
+            }))
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
 
 module.exports = router;
