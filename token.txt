@@ -1,0 +1,9 @@
+// ig paste ha terminal para magkamayda ka token ngan ig copy an output and ig paste ha .env
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+
+// ig paste ha terminal
+node .\tests\login-api-smoke-test.js
+
+// pag create ini hin user ig paste ha terminal
+node .\scripts\createUser.js

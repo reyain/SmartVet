@@ -6,26 +6,34 @@ const helmet = require('helmet');
 const path = require('path');
 
 const connectDB = require('./src/config/db');
+
 const apiRoutes = require('./src/routes/apiRoutes');
 const authRoutes = require('./src/routes/authRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
+const clinicRoutes = require('./src/routes/clinicRoutes');
+const ownerRoutes = require('./src/routes/ownerRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Add basic HTTP security headers.
 app.use(helmet());
-
-// Parse incoming JSON request bodies.
 app.use(express.json({ limit: '10kb' }));
 
-// Mount authentication and general API routes.
+// Authentication endpoints.
 app.use('/api/auth', authRoutes);
+
+// Role-protected API areas.
+app.use('/api/admin', adminRoutes);
+app.use('/api/clinic', clinicRoutes);
+app.use('/api/owner', ownerRoutes);
+
+// General API endpoints.
 app.use('/api', apiRoutes);
 
-// Serve the frontend from the public folder.
+// Serve the frontend.
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Return a JSON response for unknown routes.
+// Handle unknown routes.
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -33,7 +41,7 @@ app.use((req, res) => {
     });
 });
 
-// Handle errors passed by routes and middleware.
+// Handle unexpected server errors.
 app.use((err, req, res, next) => {
     console.error('Server error:', err.message);
 
@@ -43,7 +51,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Connect to MongoDB before starting the web server.
 async function startServer() {
     try {
         await connectDB();
@@ -54,8 +61,9 @@ async function startServer() {
             console.log('=================================');
             console.log(`Homepage: http://127.0.0.1:${PORT}`);
             console.log(`API:      http://127.0.0.1:${PORT}/api`);
-            console.log(`Health:   http://127.0.0.1:${PORT}/api/health`);
-            console.log(`Login:    http://127.0.0.1:${PORT}/api/auth/login`);
+            console.log(`Admin:    http://127.0.0.1:${PORT}/api/admin`);
+            console.log(`Clinic:   http://127.0.0.1:${PORT}/api/clinic`);
+            console.log(`Owner:    http://127.0.0.1:${PORT}/api/owner`);
             console.log('Status: Running');
         });
     } catch (error) {
