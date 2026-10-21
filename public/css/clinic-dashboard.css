@@ -117,10 +117,10 @@ body > header.site-header.clinic-header > .brand {
     font-weight: 600;
 }
 
-/* Full-width layout shell */
+/* Full-width layout shell with adjusted sidebar column */
 .clinic-shell {
     display: grid;
-    grid-template-columns: 260px minmax(0, 1fr);
+    grid-template-columns: 280px minmax(0, 1fr);
     align-items: start;
     width: 100%;
     max-width: none;
@@ -134,11 +134,11 @@ body > header.site-header.clinic-header > .brand {
     top: 94px;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 20px;
     height: calc(100vh - 112px);
-    min-height: 440px;
+    min-height: 460px;
     margin: 24px 0 24px 20px;
-    padding: 24px 16px;
+    padding: 20px 12px;
     border: 2px solid rgba(255, 255, 255, 0.85);
     border-radius: 26px;
     background: var(--clay-surface);
@@ -146,7 +146,7 @@ body > header.site-header.clinic-header > .brand {
 }
 
 .sidebar-heading {
-    padding: 4px 8px 16px;
+    padding: 4px 8px 14px;
     border-bottom: 2px solid rgba(210, 225, 240, 0.7);
 }
 
@@ -177,18 +177,19 @@ body > header.site-header.clinic-header > .brand {
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
     min-height: 48px;
-    padding: 12px 14px;
+    padding: 10px 12px;
     border: 2px solid transparent;
     border-radius: 16px;
     background: transparent;
     color: var(--clay-muted);
     font: inherit;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 700;
     text-align: left;
+    white-space: nowrap;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -206,15 +207,22 @@ body > header.site-header.clinic-header > .brand {
     box-shadow: var(--clay-shadow-button);
 }
 
+.nav-item > span:not(.nav-icon):not(.nav-count) {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .nav-icon {
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.7);
     color: var(--clay-blue);
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
 .nav-item.active .nav-icon {
@@ -226,14 +234,15 @@ body > header.site-header.clinic-header > .brand {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 24px;
-    min-height: 24px;
+    flex-shrink: 0;
+    min-width: 22px;
+    height: 22px;
     margin-left: auto;
-    padding: 2px 8px;
-    border-radius: 12px;
-    background: rgba(210, 230, 250, 0.8);
+    padding: 0 6px;
+    border-radius: 11px;
+    background: rgba(210, 230, 250, 0.85);
     color: var(--clay-heading);
-    font-size: 0.76rem;
+    font-size: 0.75rem;
     font-weight: 800;
 }
 
@@ -462,7 +471,7 @@ main.clinic-main {
     font-size: 1.3rem;
 }
 
-/* Buttons (Claymorphic rounded pills with inset top light) */
+/* Buttons */
 button {
     display: inline-flex;
     align-items: center;
@@ -618,7 +627,7 @@ button:disabled {
     font-weight: 700;
 }
 
-/* Vaccination Form Controls (Claymorphic sunken input wells) */
+/* Form Controls - Sunken Wells */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -651,7 +660,6 @@ button:disabled {
     color: var(--clay-text);
     font: inherit;
     font-size: 0.95rem;
-    /* Inset shadow creates the classic claymorphic "sunken well" input look */
     box-shadow: 
         inset 0 3px 6px rgba(15, 45, 80, 0.08), 
         inset 0 1px 2px rgba(15, 45, 80, 0.06);
@@ -681,72 +689,10 @@ button:disabled {
     margin-top: 24px;
 }
 
-/* Responsive Breakpoints */
-@media (max-width: 1050px) {
-    .clinic-shell {
-        grid-template-columns: 220px minmax(0, 1fr);
-    }
-    .overview-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .stat-card:last-child {
-        grid-column: 1 / -1;
-    }
-}
-
-@media (max-width: 760px) {
-    .clinic-shell {
-        display: block;
-    }
-    .clinic-sidebar {
-        position: static;
-        height: auto;
-        min-height: 0;
-        margin: 16px 16px 0;
-    }
-    .clinic-navigation {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    .nav-item {
-        flex: 1 1 140px;
-    }
-    main.clinic-main {
-        padding: 20px 16px 40px;
-    }
-    .overview-stats {
-        grid-template-columns: minmax(0, 1fr);
-    }
-    .stat-card:last-child {
-        grid-column: auto;
-    }
-    .form-grid {
-        grid-template-columns: minmax(0, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    .header-role {
-        display: none;
-    }
-    body > header.site-header.clinic-header {
-        padding: 12px 16px;
-    }
-    .page-heading {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .page-heading > button {
-        width: 100%;
-    }
-}
-
 /* ==========================================
    FEEDING HISTORY SECTION REFINEMENTS
    ========================================== */
 
-/* Header Toolbar Layout */
 .section-heading.feeding-toolbar {
     display: flex;
     align-items: center;
@@ -773,7 +719,6 @@ button:disabled {
     gap: 16px;
 }
 
-/* Inline Filter Control */
 .form-group.inline-group {
     display: flex;
     flex-direction: column;
@@ -809,7 +754,6 @@ button:disabled {
     background: #ffffff;
 }
 
-/* Feeding Cards List & Containers */
 .feeding-events-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -850,7 +794,6 @@ button:disabled {
     font-size: 0.88rem;
 }
 
-/* Status Pill Indicators for Feeding Events */
 .feeding-status {
     display: inline-block;
     margin-top: 10px;
@@ -877,7 +820,6 @@ button:disabled {
     color: #8c2121;
 }
 
-/* Footnote Styling */
 .feeding-footnote {
     margin-top: 24px;
     padding-top: 16px;
@@ -886,7 +828,52 @@ button:disabled {
     line-height: 1.5;
 }
 
-/* Responsive Handling */
+/* Responsive Media Queries */
+@media (max-width: 1080px) {
+    .clinic-shell {
+        grid-template-columns: 240px minmax(0, 1fr);
+    }
+    .overview-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .stat-card:last-child {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 760px) {
+    .clinic-shell {
+        display: block;
+    }
+    .clinic-sidebar {
+        position: static;
+        height: auto;
+        min-height: 0;
+        margin: 16px 16px 0;
+    }
+    .clinic-navigation {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .nav-item {
+        flex: 1 1 140px;
+        white-space: normal;
+    }
+    main.clinic-main {
+        padding: 20px 16px 40px;
+    }
+    .overview-stats {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .stat-card:last-child {
+        grid-column: auto;
+    }
+    .form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 @media (max-width: 680px) {
     .section-heading.feeding-toolbar {
         flex-direction: column;
@@ -900,6 +887,22 @@ button:disabled {
 
     .inline-select,
     .feeding-controls button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-role {
+        display: none;
+    }
+    body > header.site-header.clinic-header {
+        padding: 12px 16px;
+    }
+    .page-heading {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .page-heading > button {
         width: 100%;
     }
 }
