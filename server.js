@@ -19,6 +19,7 @@ const clinicRoutes = require('./src/routes/clinicRoutes');
 const ownerRoutes = require('./src/routes/ownerRoutes');
 const deviceRoutes = require('./src/routes/deviceRoutes');
 const feedingScheduleRoutes = require('./src/routes/feedingScheduleRoutes');
+const feedingEventRoutes = require('./src/routes/feedingEventRoutes');
 const iotRoutes = require('./src/routes/iotRoutes');
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/clinic/devices', deviceRoutes);
 app.use('/api/clinic/feeding-schedules', feedingScheduleRoutes);
+app.use('/api/clinic/feeding-events', feedingEventRoutes);
 app.use('/api/iot', iotRoutes);
 app.use('/api/clinic', clinicRoutes);
 app.use('/api/owner', ownerRoutes);

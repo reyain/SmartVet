@@ -21,6 +21,10 @@ const vaccinationForm = document.getElementById('vaccinationForm');
 const vaccinationMessage = document.getElementById('vaccinationMessage');
 const vaccinationHistory = document.getElementById('vaccinationHistory');
 
+const feedingStatusFilter = document.getElementById('feedingStatusFilter');
+const refreshFeedingEventsButton = document.getElementById('refreshFeedingEventsButton');
+const feedingEventsHistory = document.getElementById('feedingEventsHistory');
+
 const refreshApprovedPetsButton = document.getElementById(
     'refreshApprovedPetsButton'
 );
@@ -38,7 +42,8 @@ const quickActionButtons = document.querySelectorAll('[data-view-target]');
 const views = {
     overview: document.getElementById('overviewSection'),
     pending: document.getElementById('pendingSection'),
-    vaccinations: document.getElementById('vaccinationSection')
+    vaccinations: document.getElementById('vaccinationSection'),
+    feedingEvents: document.getElementById('feedingEventsSection')
 };
 
 const tokenKey = 'smartvetAccessToken';
@@ -135,6 +140,27 @@ function formatDate(value) {
     }
 
     return date.toLocaleDateString();
+    
+}
+
+function formatDateTime(value) {
+    if (!value) return 'Not recorded';
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return 'Not available';
+    }
+
+    return date.toLocaleString('en-PH', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
 }
 
 function localDateString(date = new Date()) {
@@ -186,6 +212,11 @@ function switchView(viewName) {
             loadVaccinationHistory(approvedPetSelect.value);
         }
     }
+
+    if (viewName === 'feedingEvents') {
+    loadFeedingEvents();
+}
+
 }
 
 
@@ -766,6 +797,183 @@ administeredDateInput.addEventListener('change', () => {
 
 /* Session verification */
 
+
+/* Feeding event history */
+
+async function loadFeedingEvents() {
+    if (!dashboardReady || !feedingEventsHistory) return;
+
+    const status = feedingStatusFilter
+        ? feedingStatusFilter.value
+        : '';
+
+    const query = status
+        ? `?status=${encodeURIComponent(status)}`
+        : '';
+
+    feedingEventsHistory.replaceChildren();
+    feedingEventsHistory.setAttribute('aria-busy', 'true');
+
+    addText(
+        feedingEventsHistory,
+        'p',
+        'Loading feeding history...',
+        'muted'
+    );
+
+    if (refreshFeedingEventsButton) {
+        refreshFeedingEventsButton.disabled = true;
+    }
+
+    try {
+        const data = await apiRequest(
+            `/api/clinic/feeding-events${query}`
+        );
+
+        const events = Array.isArray(data.events)
+            ? data.events
+            : [];
+
+        feedingEventsHistory.replaceChildren();
+
+        if (events.length === 0) {
+            const message = status
+                ? 'No feeding events match this status filter.'
+                : 'No feeding events have been recorded yet.';
+
+            addText(feedingEventsHistory, 'p', message, 'muted');
+            return;
+        }
+
+        addText(
+            feedingEventsHistory,
+            'p',
+            `${events.length} feeding event(s) found.`,
+            'muted'
+        );
+
+        const eventList = document.createElement('div');
+        eventList.className = 'feeding-event-list';
+
+        const dayNames = [
+            'Sunday',
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday'
+        ];
+
+        events.forEach((event) => {
+            const card = document.createElement('article');
+            card.className = 'feeding-event-card';
+
+            const petName = event.pet?.name || 'Unknown pet';
+            const petCode = event.pet?.petCode || 'No pet code';
+            const deviceCode = event.feeder?.deviceCode || 'Unknown feeder';
+            const eventStatus = event.status || 'Unknown';
+
+            addText(
+                card,
+                'h3',
+                `${petName} (${petCode})`
+            );
+
+            addText(
+                card,
+                'p',
+                `Feeder: ${deviceCode}`,
+                'muted'
+            );
+
+            addText(
+                card,
+                'p',
+                `Status: ${eventStatus}`,
+                'feeding-event-status'
+            );
+
+            const details = document.createElement('dl');
+            details.className = 'feeding-event-details';
+
+            function addDetail(label, value) {
+                const item = document.createElement('div');
+                item.className = 'feeding-event-detail';
+
+                addText(item, 'dt', label);
+                addText(item, 'dd', String(value));
+
+                details.appendChild(item);
+            }
+
+            const schedule = event.schedule;
+            const scheduleTime = schedule?.timeOfDay
+                ? `${schedule.timeOfDay} (${schedule.timezone || 'timezone not specified'})`
+                : 'No linked schedule';
+
+            const scheduleDays = Array.isArray(schedule?.daysOfWeek)
+                ? schedule.daysOfWeek
+                    .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6)
+                    .map((day) => dayNames[day])
+                    .join(', ')
+                : '';
+
+            addDetail('Event ID', event.eventId || 'Not provided');
+            addDetail('Feeding source', event.source || 'Not provided');
+            addDetail('Scheduled time', scheduleTime);
+
+            if (scheduleDays) {
+                addDetail('Scheduled days', scheduleDays);
+            }
+
+            addDetail(
+                'Requested food',
+                Number.isFinite(event.requestedGrams)
+                    ? `${event.requestedGrams} g`
+                    : 'Not provided'
+            );
+
+            addDetail(
+                'Reported dispensed food',
+                Number.isFinite(event.dispensedGrams)
+                    ? `${event.dispensedGrams} g`
+                    : 'Not reported'
+            );
+
+            addDetail('Started', formatDateTime(event.startedAt));
+            addDetail('Completed', formatDateTime(event.completedAt));
+
+            if (event.failureReason) {
+                addDetail('Failure reason', event.failureReason);
+            }
+
+            details.setAttribute('aria-label', 'Feeding event details');
+            card.appendChild(details);
+            eventList.appendChild(card);
+        });
+
+        feedingEventsHistory.appendChild(eventList);
+    } catch (error) {
+        feedingEventsHistory.replaceChildren();
+
+        addText(
+            feedingEventsHistory,
+            'p',
+            error.message || 'Unable to load feeding history.',
+            'error'
+        );
+    } finally {
+        feedingEventsHistory.setAttribute('aria-busy', 'false');
+
+        if (refreshFeedingEventsButton) {
+            refreshFeedingEventsButton.disabled = false;
+        }
+    }
+}
+
+
+
 async function verifyVeterinarySession() {
     if (!getToken()) {
         logout();
@@ -812,6 +1020,15 @@ async function verifyVeterinarySession() {
 
 refreshButton.addEventListener('click', loadPendingPets);
 logoutButton.addEventListener('click', logout);
+
+
+if (feedingStatusFilter) {
+    feedingStatusFilter.addEventListener('change', loadFeedingEvents);
+}
+
+if (refreshFeedingEventsButton) {
+    refreshFeedingEventsButton.addEventListener('click', loadFeedingEvents);
+}
 
 switchView('overview');
 verifyVeterinarySession();

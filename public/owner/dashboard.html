@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,204 +12,268 @@
     <script src="/js/owner-dashboard.js" defer></script>
 </head>
 <body>
-    <header class="site-header">
+    <header class="site-header owner-header">
         <a class="brand" href="/" aria-label="SmartVet Home">
             <span class="brand-mark">S</span>
             <span>SmartVet</span>
         </a>
 
-        <button id="logoutButton" class="primary-button" type="button">
-            Log out
-        </button>
+        <div class="header-user">
+            <span class="header-role">Pet Owner Portal</span>
+            <button id="logoutButton" class="primary-button logout" type="button">
+                Log out
+            </button>
+        </div>
     </header>
 
-    <main class="container">
+    <div class="owner-shell">
+        <!-- Sidebar Navigation -->
+        <aside class="owner-sidebar">
+            <div class="sidebar-heading">
+                <span class="sidebar-eyebrow">PET OWNER PORTAL</span>
+                <h2>Owner Workspace</h2>
+                <p>Manage pets & updates</p>
+            </div>
 
-        <!-- Welcome and account status -->
-        <section class="dashboard-heading">
-            <p class="eyebrow">PET OWNER PORTAL</p>
-
-            <h1 id="welcomeHeading">Owner Dashboard</h1>
-
-            <p class="hero-description">
-                Register your pets, view their vaccination cards,
-                and monitor their registration status.
-            </p>
-
-            <p id="dashboardMessage"
-               class="message"
-               role="status"
-               aria-live="polite">
-                Checking your account...
-            </p>
-        </section>
-
-        <!-- Notifications appear before the pet panels -->
-        <section class="panel owner-notifications-panel"
-                 aria-labelledby="notificationsHeading">
-
-            <div class="notifications-toolbar">
-                <div>
-                    <h2 id="notificationsHeading">Notifications</h2>
-
-                    <p class="form-help">
-                        View vaccination reminders and other updates
-                        about your pets.
-                    </p>
-                </div>
-
-                <button id="refreshNotificationsButton"
-                        class="secondary-button"
-                        type="button">
-                    Refresh Notifications
+            <nav class="owner-navigation" aria-label="Owner navigation">
+                <button
+                    type="button"
+                    class="nav-item active"
+                    data-view="overview"
+                    aria-current="page">
+                    <span class="nav-icon" aria-hidden="true">⌂</span>
+                    <span>Overview</span>
                 </button>
-            </div>
 
-            <p id="notificationsSummary"
-               class="message"
-               role="status"
-               aria-live="polite">
-                Loading notifications...
-            </p>
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-view="register">
+                    <span class="nav-icon" aria-hidden="true">✚</span>
+                    <span>Register a Pet</span>
+                </button>
 
-            <div id="ownerNotificationList" class="notification-list">
-                <div class="empty-state">
-                    Loading your notifications...
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-view="mypets">
+                    <span class="nav-icon" aria-hidden="true">🐾</span>
+                    <span>My Registered Pets</span>
+                    <span class="nav-count" id="sidebarPetsCount">—</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-view="notifications">
+                    <span class="nav-icon" aria-hidden="true">🔔</span>
+                    <span>Notifications</span>
+                    <span class="nav-count" id="sidebarUnreadCount">—</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span class="sidebar-status-dot"></span>
+                <div>
+                    <strong>Portal active</strong>
+                    <p>SmartVet Owner System</p>
                 </div>
             </div>
-        </section>
+        </aside>
 
-        <!-- Registration form and registered pet list -->
-        <section class="dashboard-grid">
+        <!-- Main Workspace Area -->
+        <main class="owner-main">
 
-            <!-- Register a pet -->
-            <div class="panel">
-                <h2>Register a Pet</h2>
+            <!-- OVERVIEW VIEW -->
+            <section class="owner-view is-active" id="overviewSection" data-page="overview">
+                <div class="page-heading">
+                    <div>
+                        <p class="page-eyebrow">PET OWNER PORTAL</p>
+                        <h1 id="welcomeHeading">Owner Dashboard</h1>
+                        <p class="muted">
+                            Register your pets, view digital vaccination cards, and monitor registration status.
+                        </p>
+                    </div>
+                </div>
 
-                <p>
-                    Submit your pet's information for veterinary review.
+                <p id="dashboardMessage" class="message" role="status" aria-live="polite">
+                    Checking your account...
                 </p>
 
-                <form id="petRegistrationForm">
-                    <div class="form-field">
-                        <label for="petName">Pet name *</label>
-                        <input
-                            id="petName"
-                            name="name"
-                            type="text"
-                            maxlength="100"
-                            required
-                        >
+                <div class="overview-stats">
+                    <article class="stat-card">
+                        <span class="stat-label">Registered Pets</span>
+                        <strong id="overviewPetsCount">—</strong>
+                        <span class="stat-description">Total pets in your account</span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">Unread Notifications</span>
+                        <strong id="overviewUnreadCount">—</strong>
+                        <span class="stat-description">Reminders and updates</span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">Digital Access</span>
+                        <strong class="stat-word">Available</strong>
+                        <span class="stat-description">QR codes & vaccination cards</span>
+                    </article>
+                </div>
+
+                <section class="workspace-panel">
+                    <div class="section-heading">
+                        <h2>Quick Actions</h2>
+                        <p class="muted">Select a workspace tab to manage your pet records.</p>
                     </div>
 
-                    <div class="form-field">
-                        <label for="species">Species *</label>
-                        <select id="species" name="species" required>
-                            <option value="">Select species</option>
-                            <option value="dog">Dog</option>
-                            <option value="cat">Cat</option>
-                            <option value="rabbit">Rabbit</option>
-                            <option value="bird">Bird</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-
-                    <div class="form-field">
-                        <label for="breed">Breed</label>
-                        <input
-                            id="breed"
-                            name="breed"
-                            type="text"
-                            maxlength="100"
-                        >
-                    </div>
-
-                    <div class="form-field">
-                        <label for="sex">Sex</label>
-                        <select id="sex" name="sex">
-                            <option value="unknown">Unknown</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                        </select>
-                    </div>
-
-                    <div class="form-field">
-                        <label for="dateOfBirth">Date of birth</label>
-                        <input
-                            id="dateOfBirth"
-                            name="dateOfBirth"
-                            type="date"
-                        >
-                    </div>
-
-                    <div class="form-field">
-                        <label for="color">Color / markings</label>
-                        <input
-                            id="color"
-                            name="color"
-                            type="text"
-                            maxlength="100"
-                        >
-                    </div>
-
-                    <p class="form-help">
-                        Fields marked * are required.
-                    </p>
-
-                    <p id="registrationMessage"
-                       class="message"
-                       role="status"
-                       aria-live="polite"></p>
-
-                    <div class="form-actions">
-                        <button
-                            id="registerPetButton"
-                            class="primary-button"
-                            type="submit">
-                            Submit Registration
+                    <div class="quick-action-grid">
+                        <button type="button" class="quick-action" data-view-target="register">
+                            <span class="quick-action-icon">✚</span>
+                            <span>
+                                <strong>Register a New Pet</strong>
+                                <small>Submit pet details for veterinary verification.</small>
+                            </span>
+                            <span class="quick-arrow" aria-hidden="true">→</span>
                         </button>
 
-                        <button
-                            id="resetFormButton"
-                            class="secondary-button"
-                            type="reset">
-                            Clear Form
+                        <button type="button" class="quick-action" data-view-target="mypets">
+                            <span class="quick-action-icon">🐾</span>
+                            <span>
+                                <strong>View Registered Pets</strong>
+                                <small>Check approval status, QR codes, and digital cards.</small>
+                            </span>
+                            <span class="quick-arrow" aria-hidden="true">→</span>
+                        </button>
+
+                        <button type="button" class="quick-action" data-view-target="notifications">
+                            <span class="quick-action-icon">🔔</span>
+                            <span>
+                                <strong>Notifications</strong>
+                                <small>View vaccination reminders and updates.</small>
+                            </span>
+                            <span class="quick-arrow" aria-hidden="true">→</span>
                         </button>
                     </div>
-                </form>
-            </div>
+                </section>
+            </section>
 
-            <!-- My registered pets -->
-            <div class="panel">
-                <h2>My Registered Pets</h2>
+            <!-- REGISTER A PET VIEW -->
+            <section class="owner-view" id="registerSection" data-page="register" hidden>
+                <div class="page-heading">
+                    <div>
+                        <p class="page-eyebrow">REGISTRATION FORM</p>
+                        <h1>Register a Pet</h1>
+                        <p class="muted">Submit your pet's information for veterinary review.</p>
+                    </div>
+                </div>
 
-                <p>
-                    Registration status updates when veterinary staff
-                    review your submission.
-                </p>
+                <div class="workspace-panel">
+                    <form id="petRegistrationForm">
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="petName">Pet name *</label>
+                                <input id="petName" name="name" type="text" maxlength="100" required placeholder="e.g. Buddy">
+                            </div>
 
-                <div class="form-actions">
-                    <button
-                        id="refreshPetsButton"
-                        class="secondary-button"
-                        type="button">
+                            <div class="form-field">
+                                <label for="species">Species *</label>
+                                <select id="species" name="species" required>
+                                    <option value="">Select species</option>
+                                    <option value="dog">Dog</option>
+                                    <option value="cat">Cat</option>
+                                    <option value="rabbit">Rabbit</option>
+                                    <option value="bird">Bird</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="breed">Breed</label>
+                                <input id="breed" name="breed" type="text" maxlength="100" placeholder="e.g. Golden Retriever">
+                            </div>
+
+                            <div class="form-field">
+                                <label for="sex">Sex</label>
+                                <select id="sex" name="sex">
+                                    <option value="unknown">Unknown</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="dateOfBirth">Date of birth</label>
+                                <input id="dateOfBirth" name="dateOfBirth" type="date">
+                            </div>
+
+                            <div class="form-field">
+                                <label for="color">Color / markings</label>
+                                <input id="color" name="color" type="text" maxlength="100" placeholder="e.g. Brown with white chest">
+                            </div>
+                        </div>
+
+                        <p class="form-help">Fields marked * are required.</p>
+
+                        <p id="registrationMessage" class="message" role="status" aria-live="polite"></p>
+
+                        <div class="form-actions">
+                            <button id="registerPetButton" class="primary-button" type="submit">
+                                Submit Registration
+                            </button>
+
+                            <button id="resetFormButton" class="secondary-button" type="reset">
+                                Clear Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- MY REGISTERED PETS VIEW -->
+            <section class="owner-view" id="mypetsSection" data-page="mypets" hidden>
+                <div class="page-heading">
+                    <div>
+                        <p class="page-eyebrow">MY PETS</p>
+                        <h1>My Registered Pets</h1>
+                        <p class="muted">Registration status updates when veterinary staff review your submission.</p>
+                    </div>
+
+                    <button id="refreshPetsButton" class="secondary-button" type="button">
                         Refresh List
                     </button>
                 </div>
 
-                <p id="petsMessage"
-                   class="message"
-                   role="status"
-                   aria-live="polite"></p>
+                <p id="petsMessage" class="message" role="status" aria-live="polite"></p>
 
-                <div id="petList" class="pet-list">
-                    <div class="empty-state">
-                        Loading your pets...
-                    </div>
+                <div id="petList" class="pet-grid">
+                    <div class="empty-state">Loading your pets...</div>
                 </div>
-            </div>
+            </section>
 
-        </section>
-    </main>
+            <!-- NOTIFICATIONS VIEW -->
+            <section class="owner-view" id="notificationsSection" data-page="notifications" hidden>
+                <div class="page-heading">
+                    <div>
+                        <p class="page-eyebrow">COMMUNICATIONS</p>
+                        <h1>Notifications</h1>
+                        <p class="muted">View vaccination reminders and other updates about your pets.</p>
+                    </div>
+
+                    <button id="refreshNotificationsButton" class="secondary-button" type="button">
+                        Refresh Notifications
+                    </button>
+                </div>
+
+                <p id="notificationsSummary" class="message" role="status" aria-live="polite">
+                    Loading notifications...
+                </p>
+
+                <div id="ownerNotificationList" class="notification-list">
+                    <div class="empty-state">Loading your notifications...</div>
+                </div>
+            </section>
+
+        </main>
+    </div>
 </body>
 </html>

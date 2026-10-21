@@ -1,4 +1,3 @@
-
 const token = sessionStorage.getItem('smartvetAccessToken');
 
 const welcomeHeading = document.getElementById('welcomeHeading');
@@ -11,28 +10,62 @@ const refreshPetsButton = document.getElementById('refreshPetsButton');
 const petsMessage = document.getElementById('petsMessage');
 const petList = document.getElementById('petList');
 
-// Owner notification elements
-const refreshNotificationsButton = document.getElementById(
-    'refreshNotificationsButton'
-);
+// Notifications
+const refreshNotificationsButton = document.getElementById('refreshNotificationsButton');
+const notificationsSummary = document.getElementById('notificationsSummary');
+const ownerNotificationList = document.getElementById('ownerNotificationList');
 
-const notificationsSummary = document.getElementById(
-    'notificationsSummary'
-);
-
-const ownerNotificationList = document.getElementById(
-    'ownerNotificationList'
-);
+// Sidebar counts & Overview stats
+const sidebarPetsCount = document.getElementById('sidebarPetsCount');
+const sidebarUnreadCount = document.getElementById('sidebarUnreadCount');
+const overviewPetsCount = document.getElementById('overviewPetsCount');
+const overviewUnreadCount = document.getElementById('overviewUnreadCount');
 
 let ownerVerified = false;
 
+// Sidebar & View Navigation Logic
+function switchView(targetView) {
+    const navItems = document.querySelectorAll('.nav-item');
+    const views = document.querySelectorAll('.owner-view');
+
+    navItems.forEach((item) => {
+        if (item.dataset.view === targetView) {
+            item.classList.add('active');
+            item.setAttribute('aria-current', 'page');
+        } else {
+            item.classList.remove('active');
+            item.removeAttribute('aria-current');
+        }
+    });
+
+    views.forEach((view) => {
+        if (view.dataset.page === targetView) {
+            view.classList.add('is-active');
+            view.hidden = false;
+        } else {
+            view.classList.remove('is-active');
+            view.hidden = true;
+        }
+    });
+}
+
+document.querySelectorAll('.nav-item').forEach((button) => {
+    button.addEventListener('click', () => {
+        switchView(button.dataset.view);
+    });
+});
+
+document.querySelectorAll('.quick-action').forEach((button) => {
+    button.addEventListener('click', () => {
+        switchView(button.dataset.viewTarget);
+    });
+});
+
 function showMessage(element, message, type = '') {
+    if (!element) return;
     element.textContent = message;
     element.classList.remove('error', 'success');
-
-    if (type) {
-        element.classList.add(type);
-    }
+    if (type) element.classList.add(type);
 }
 
 function logout() {
@@ -79,147 +112,86 @@ function readableStatus(status) {
         approved: 'Approved',
         needs_verification: 'Needs additional verification'
     };
-
     return labels[status] || 'Unknown status';
 }
 
-
 function createPetCard(pet) {
-    
-function formatVaccinationDate(value) {
-    if (!value) return 'Not recorded';
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return 'Not available';
+    function formatVaccinationDate(value) {
+        if (!value) return 'Not recorded';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime())
+            ? 'Not available'
+            : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    return date.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
-}
+    function addVaccinationDetail(parent, label, value) {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = `${label}: ${value || 'Not provided'}`;
+        parent.appendChild(paragraph);
+    }
 
-function addVaccinationDetail(parent, label, value) {
-    const paragraph = document.createElement('p');
-    paragraph.textContent = `${label}: ${value || 'Not provided'}`;
-    parent.appendChild(paragraph);
-}
-
-async function loadOwnerVaccinationCard(petId, container) {
-    container.replaceChildren();
-
-    const loading = document.createElement('p');
-    loading.className = 'muted';
-    loading.textContent = 'Loading digital vaccination card...';
-    container.appendChild(loading);
-
-    try {
-        const data = await apiRequest(
-            `/api/owner/pets/${encodeURIComponent(petId)}/vaccinations`
-        );
-
+    async function loadOwnerVaccinationCard(petId, container) {
         container.replaceChildren();
+        const loading = document.createElement('p');
+        loading.className = 'muted';
+        loading.textContent = 'Loading digital vaccination card...';
+        container.appendChild(loading);
 
-        const pet = data.pet || {};
+        try {
+            const data = await apiRequest(`/api/owner/pets/${encodeURIComponent(petId)}/vaccinations`);
+            container.replaceChildren();
 
-        const heading = document.createElement('h4');
-        heading.textContent = 'Digital Vaccination Card';
-        container.appendChild(heading);
+            const petInfo = data.pet || {};
+            const heading = document.createElement('h4');
+            heading.textContent = 'Digital Vaccination Card';
+            container.appendChild(heading);
 
-        addVaccinationDetail(container, 'Pet name', pet.name);
-        addVaccinationDetail(container, 'Official Pet ID', pet.petCode);
-        addVaccinationDetail(container, 'Species', pet.species);
-        addVaccinationDetail(
-            container,
-            'Registration status',
-            readableStatus(pet.registrationStatus)
-        );
+            addVaccinationDetail(container, 'Pet name', petInfo.name);
+            addVaccinationDetail(container, 'Official Pet ID', petInfo.petCode);
+            addVaccinationDetail(container, 'Species', petInfo.species);
+            addVaccinationDetail(container, 'Registration status', readableStatus(petInfo.registrationStatus));
 
-        const records = Array.isArray(data.vaccinations)
-            ? data.vaccinations
-            : [];
+            const records = Array.isArray(data.vaccinations) ? data.vaccinations : [];
+            const historyHeading = document.createElement('h4');
+            historyHeading.textContent = 'Vaccination History';
+            container.appendChild(historyHeading);
 
-        const historyHeading = document.createElement('h4');
-        historyHeading.textContent = 'Vaccination History';
-        container.appendChild(historyHeading);
-
-        if (records.length === 0) {
-            const empty = document.createElement('p');
-            empty.className = 'empty-state';
-            empty.textContent =
-                'No vaccination records have been entered by veterinary staff yet.';
-            container.appendChild(empty);
-            return true;
-        }
-
-        const count = document.createElement('p');
-        count.className = 'form-help';
-        count.textContent = `${records.length} vaccination record(s).`;
-        container.appendChild(count);
-
-        records.forEach((record) => {
-            const entry = document.createElement('article');
-            entry.className = 'owner-vaccination-entry';
-
-            const vaccineHeading = document.createElement('h5');
-            vaccineHeading.textContent =
-                record.vaccineName || 'Unnamed vaccine';
-            entry.appendChild(vaccineHeading);
-
-            addVaccinationDetail(
-                entry,
-                'Date administered',
-                formatVaccinationDate(record.administeredDate)
-            );
-
-            addVaccinationDetail(
-                entry,
-                'Next due date',
-                formatVaccinationDate(record.nextDueDate)
-            );
-
-            addVaccinationDetail(
-                entry,
-                'Manufacturer',
-                record.manufacturer
-            );
-
-            addVaccinationDetail(
-                entry,
-                'Batch / lot number',
-                record.batchNumber
-            );
-
-            addVaccinationDetail(entry, 'Dosage', record.dosage);
-            addVaccinationDetail(
-                entry,
-                'Recorded by',
-                record.administeredBy
-            );
-
-            if (record.notes) {
-                addVaccinationDetail(entry, 'Notes', record.notes);
+            if (records.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'empty-state';
+                empty.textContent = 'No vaccination records have been entered by veterinary staff yet.';
+                container.appendChild(empty);
+                return true;
             }
 
-            container.appendChild(entry);
-        });
+            records.forEach((record) => {
+                const entry = document.createElement('article');
+                entry.className = 'owner-vaccination-entry';
+                const vaccineHeading = document.createElement('h5');
+                vaccineHeading.textContent = record.vaccineName || 'Unnamed vaccine';
+                entry.appendChild(vaccineHeading);
 
-        return true;
-    } catch (error) {
-        container.replaceChildren();
+                addVaccinationDetail(entry, 'Date administered', formatVaccinationDate(record.administeredDate));
+                addVaccinationDetail(entry, 'Next due date', formatVaccinationDate(record.nextDueDate));
+                addVaccinationDetail(entry, 'Manufacturer', record.manufacturer);
+                addVaccinationDetail(entry, 'Batch / lot number', record.batchNumber);
+                addVaccinationDetail(entry, 'Dosage', record.dosage);
+                addVaccinationDetail(entry, 'Recorded by', record.administeredBy);
+                if (record.notes) addVaccinationDetail(entry, 'Notes', record.notes);
 
-        const message = document.createElement('p');
-        message.className = 'message error';
-        message.textContent =
-            error.message || 'Unable to load the vaccination card.';
-        container.appendChild(message);
+                container.appendChild(entry);
+            });
 
-        return false;
+            return true;
+        } catch (error) {
+            container.replaceChildren();
+            const message = document.createElement('p');
+            message.className = 'message error';
+            message.textContent = error.message || 'Unable to load vaccination card.';
+            container.appendChild(message);
+            return false;
+        }
     }
-}
 
     const card = document.createElement('article');
     card.className = 'pet-card';
@@ -243,8 +215,7 @@ async function loadOwnerVaccinationCard(petId, container) {
 
     if (pet.dateOfBirth) {
         const birthDate = document.createElement('p');
-        birthDate.textContent =
-            `Date of birth: ${pet.dateOfBirth.slice(0, 10)}`;
+        birthDate.textContent = `Date of birth: ${pet.dateOfBirth.slice(0, 10)}`;
         card.appendChild(birthDate);
     }
 
@@ -253,17 +224,11 @@ async function loadOwnerVaccinationCard(petId, container) {
     status.textContent = readableStatus(pet.registrationStatus);
     card.appendChild(status);
 
-    // Show the official Pet ID and QR code only after approval.
     if (pet.registrationStatus === 'approved') {
         const petCode = document.createElement('p');
-        petCode.className = 'pet-code';
-        petCode.textContent = pet.petCode
-            ? `Official Pet ID: ${pet.petCode}`
-            : 'Official Pet ID is not available yet.';
+        petCode.textContent = pet.petCode ? `Official Pet ID: ${pet.petCode}` : 'Official Pet ID is pending.';
         card.appendChild(petCode);
 
-        
-        // Allow the owner to open the digital vaccination card.
         const vaccinationButton = document.createElement('button');
         vaccinationButton.type = 'button';
         vaccinationButton.className = 'secondary-button vaccination-toggle';
@@ -276,35 +241,22 @@ async function loadOwnerVaccinationCard(petId, container) {
         vaccinationButton.addEventListener('click', async () => {
             if (!vaccinationContainer.hidden) {
                 vaccinationContainer.hidden = true;
-                vaccinationButton.textContent =
-                    'View Digital Vaccination Card';
+                vaccinationButton.textContent = 'View Digital Vaccination Card';
                 return;
             }
-
             vaccinationContainer.hidden = false;
             vaccinationButton.textContent = 'Hide Digital Vaccination Card';
 
-            if (vaccinationContainer.dataset.loaded === 'true') {
-                return;
-            }
+            if (vaccinationContainer.dataset.loaded === 'true') return;
 
             vaccinationButton.disabled = true;
-
-            const loaded = await loadOwnerVaccinationCard(
-                pet.id,
-                vaccinationContainer
-            );
-
-            if (loaded) {
-                vaccinationContainer.dataset.loaded = 'true';
-            }
-
+            const loaded = await loadOwnerVaccinationCard(pet.id, vaccinationContainer);
+            if (loaded) vaccinationContainer.dataset.loaded = 'true';
             vaccinationButton.disabled = false;
         });
 
         card.appendChild(vaccinationButton);
         card.appendChild(vaccinationContainer);
-
 
         if (pet.petCode && pet.id) {
             const qrSection = document.createElement('div');
@@ -320,12 +272,8 @@ async function loadOwnerVaccinationCard(petId, container) {
             qrSection.appendChild(qrMessage);
 
             const qrImage = document.createElement('img');
-            qrImage.alt = `QR identification code for ${pet.name}`;
-            qrImage.width = 200;
-            qrImage.height = 200;
+            qrImage.alt = `QR code for ${pet.name}`;
             qrImage.hidden = true;
-            qrImage.style.maxWidth = '100%';
-            qrImage.style.height = 'auto';
             qrSection.appendChild(qrImage);
 
             const downloadButton = document.createElement('button');
@@ -336,10 +284,7 @@ async function loadOwnerVaccinationCard(petId, container) {
             qrSection.appendChild(downloadButton);
 
             downloadButton.addEventListener('click', () => {
-                if (!qrImage.src || qrImage.hidden) {
-                    return;
-                }
-
+                if (!qrImage.src || qrImage.hidden) return;
                 const link = document.createElement('a');
                 link.href = qrImage.src;
                 link.download = `${pet.petCode}-QR.png`;
@@ -350,25 +295,16 @@ async function loadOwnerVaccinationCard(petId, container) {
 
             card.appendChild(qrSection);
 
-            apiRequest(
-                `/api/owner/pets/${encodeURIComponent(pet.id)}/qr-image`
-            )
+            apiRequest(`/api/owner/pets/${encodeURIComponent(pet.id)}/qr-image`)
                 .then((data) => {
-                    if (!data.qrCodeImage) {
-                        throw new Error('The server did not return a QR image.');
-                    }
-
+                    if (!data.qrCodeImage) throw new Error('No QR image returned.');
                     qrImage.src = data.qrCodeImage;
                     qrImage.hidden = false;
                     downloadButton.disabled = false;
-                    showMessage(qrMessage, 'QR code ready to download.', 'success');
+                    showMessage(qrMessage, 'QR code ready.', 'success');
                 })
                 .catch((error) => {
-                    showMessage(
-                        qrMessage,
-                        error.message || 'Unable to load the QR code.',
-                        'error'
-                    );
+                    showMessage(qrMessage, error.message || 'Unable to load QR code.', 'error');
                 });
         }
     }
@@ -376,58 +312,17 @@ async function loadOwnerVaccinationCard(petId, container) {
     return card;
 }
 
-
-function formatNotificationTimestamp(value) {
-    if (!value) return 'Date unavailable';
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return 'Date unavailable';
-    }
-
-    return date.toLocaleString();
-}
-
 function createNotificationCard(notification) {
     const card = document.createElement('article');
-
-    card.className = notification.read
-        ? 'owner-notification-card is-read'
-        : 'owner-notification-card is-unread';
+    card.className = notification.read ? 'owner-notification-card is-read' : 'owner-notification-card is-unread';
 
     const heading = document.createElement('h3');
     heading.textContent = notification.title || 'Notification';
     card.appendChild(heading);
 
     const message = document.createElement('p');
-    message.className = 'notification-message';
     message.textContent = notification.message || '';
     card.appendChild(message);
-
-    if (notification.pet) {
-        const petDetails = document.createElement('p');
-        petDetails.className = 'notification-meta';
-
-        petDetails.textContent = notification.pet.name
-            ? `Pet: ${notification.pet.name}${
-                notification.pet.petCode
-                    ? ` (${notification.pet.petCode})`
-                    : ''
-              }`
-            : 'Related pet';
-
-        card.appendChild(petDetails);
-    }
-
-    const details = document.createElement('p');
-    details.className = 'notification-meta';
-
-    details.textContent =
-        `${notification.read ? 'Read' : 'Unread'} · ` +
-        formatNotificationTimestamp(notification.createdAt);
-
-    card.appendChild(details);
 
     if (notification.priority === 'high') {
         const priority = document.createElement('span');
@@ -438,24 +333,13 @@ function createNotificationCard(notification) {
 
     if (!notification.read) {
         const markReadButton = document.createElement('button');
-
         markReadButton.type = 'button';
         markReadButton.className = 'secondary-button';
         markReadButton.textContent = 'Mark as Read';
-
         markReadButton.addEventListener('click', () => {
-            markNotificationAsRead(
-                notification.id,
-                markReadButton
-            );
+            markNotificationAsRead(notification.id, markReadButton);
         });
-
         card.appendChild(markReadButton);
-    } else {
-        const readLabel = document.createElement('span');
-        readLabel.className = 'notification-read-label';
-        readLabel.textContent = 'Already read';
-        card.appendChild(readLabel);
     }
 
     return card;
@@ -463,62 +347,32 @@ function createNotificationCard(notification) {
 
 async function loadNotifications() {
     refreshNotificationsButton.disabled = true;
-
-    showMessage(
-        notificationsSummary,
-        'Loading notifications...'
-    );
-
+    showMessage(notificationsSummary, 'Loading notifications...');
     ownerNotificationList.replaceChildren();
 
     try {
         const data = await apiRequest('/api/owner/notifications');
-
-        const notifications = Array.isArray(data.notifications)
-            ? data.notifications
-            : [];
-
+        const notifications = Array.isArray(data.notifications) ? data.notifications : [];
         const unreadCount = Number(data.unreadCount) || 0;
 
-        showMessage(
-            notificationsSummary,
-            `${unreadCount} unread notification(s) · ` +
-            `${notifications.length} notification(s) displayed.`,
-            'success'
-        );
+        if (sidebarUnreadCount) sidebarUnreadCount.textContent = unreadCount;
+        if (overviewUnreadCount) overviewUnreadCount.textContent = unreadCount;
+
+        showMessage(notificationsSummary, `${unreadCount} unread notification(s).`, 'success');
 
         if (notifications.length === 0) {
             const empty = document.createElement('div');
-
             empty.className = 'empty-state';
             empty.textContent = 'You have no notifications yet.';
-
             ownerNotificationList.appendChild(empty);
             return;
         }
 
-        const fragment = document.createDocumentFragment();
-
         notifications.forEach((notification) => {
-            fragment.appendChild(
-                createNotificationCard(notification)
-            );
+            ownerNotificationList.appendChild(createNotificationCard(notification));
         });
-
-        ownerNotificationList.appendChild(fragment);
     } catch (error) {
-        showMessage(
-            notificationsSummary,
-            error.message || 'Unable to load notifications.',
-            'error'
-        );
-
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'empty-state';
-        errorMessage.textContent =
-            'Your notifications could not be loaded. Please try again.';
-
-        ownerNotificationList.appendChild(errorMessage);
+        showMessage(notificationsSummary, error.message || 'Unable to load notifications.', 'error');
     } finally {
         refreshNotificationsButton.disabled = false;
     }
@@ -526,38 +380,13 @@ async function loadNotifications() {
 
 async function markNotificationAsRead(notificationId, button) {
     button.disabled = true;
-    button.textContent = 'Updating...';
-
     try {
-        await apiRequest(
-            `/api/owner/notifications/${
-                encodeURIComponent(notificationId)
-            }/read`,
-            {
-                method: 'PATCH'
-            }
-        );
-
-        showMessage(
-            notificationsSummary,
-            'Notification marked as read.',
-            'success'
-        );
-
-        // Reload the list and unread count from the server.
+        await apiRequest(`/api/owner/notifications/${encodeURIComponent(notificationId)}/read`, { method: 'PATCH' });
         await loadNotifications();
     } catch (error) {
-        showMessage(
-            notificationsSummary,
-            error.message || 'Unable to mark the notification as read.',
-            'error'
-        );
-
         button.disabled = false;
-        button.textContent = 'Mark as Read';
     }
 }
-
 
 async function loadPets() {
     refreshPetsButton.disabled = true;
@@ -567,64 +396,50 @@ async function loadPets() {
         const data = await apiRequest('/api/owner/pets');
         petList.replaceChildren();
 
-        if (!Array.isArray(data.pets) || data.pets.length === 0) {
+        const pets = Array.isArray(data.pets) ? data.pets : [];
+        const count = data.count ?? pets.length;
+
+        if (sidebarPetsCount) sidebarPetsCount.textContent = count;
+        if (overviewPetsCount) overviewPetsCount.textContent = count;
+
+        if (pets.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'empty-state';
-            empty.textContent =
-                'You have not registered any pets yet. Use the form to register your first pet.';
+            empty.textContent = 'You have not registered any pets yet. Use the Register tab to add your first pet.';
             petList.appendChild(empty);
         } else {
-            data.pets.forEach((pet) => {
+            pets.forEach((pet) => {
                 petList.appendChild(createPetCard(pet));
             });
         }
 
-        showMessage(
-            petsMessage,
-            `${data.count ?? data.pets.length} pet record(s) found.`,
-            'success'
-        );
+        showMessage(petsMessage, `${count} pet record(s) found.`, 'success');
     } catch (error) {
         showMessage(petsMessage, error.message, 'error');
     } finally {
         refreshPetsButton.disabled = false;
     }
+}
+
+async function verifyOwner() {
+    if (!token) {
+        logout();
+        return;
     }
 
-    async function verifyOwner() {
-        if (!token) {
-            logout();
+    try {
+        const data = await apiRequest('/api/auth/me');
+
+        if (data.user?.role !== 'owner') {
+            showMessage(dashboardMessage, 'This page is only for pet-owner accounts.', 'error');
             return;
         }
 
-        try {
-            const data = await apiRequest('/api/auth/me');
+        ownerVerified = true;
+        welcomeHeading.textContent = `Welcome, ${data.user.fullName || 'Pet Owner'}`;
+        showMessage(dashboardMessage, 'Your account is verified.', 'success');
 
-            if (data.user?.role !== 'owner') {
-                showMessage(
-                    dashboardMessage,
-                    'This page is only for pet-owner accounts.',
-                    'error'
-                );
-                registrationForm.querySelectorAll('input, select, button')
-                    .forEach((element) => { element.disabled = true; });
-                return;
-            }
-
-            ownerVerified = true;
-            welcomeHeading.textContent =
-                `Welcome, ${data.user.fullName || 'Pet Owner'}`;
-
-            showMessage(
-        dashboardMessage,
-        'Your account is verified.',
-        'success'
-    );
-
-    await Promise.all([
-        loadPets(),
-        loadNotifications()
-    ]);
+        await Promise.all([loadPets(), loadNotifications()]);
     } catch (error) {
         showMessage(dashboardMessage, error.message, 'error');
     }
@@ -634,11 +449,7 @@ registrationForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     if (!ownerVerified) {
-        showMessage(
-            registrationMessage,
-            'Your owner account has not been verified.',
-            'error'
-        );
+        showMessage(registrationMessage, 'Your owner account has not been verified.', 'error');
         return;
     }
 
@@ -646,7 +457,6 @@ registrationForm.addEventListener('submit', async (event) => {
     showMessage(registrationMessage, 'Submitting pet registration...');
 
     const formData = new FormData(registrationForm);
-
     const petData = {
         name: String(formData.get('name') || '').trim(),
         species: String(formData.get('species') || ''),
@@ -656,10 +466,7 @@ registrationForm.addEventListener('submit', async (event) => {
     };
 
     const dateOfBirth = String(formData.get('dateOfBirth') || '');
-
-    if (dateOfBirth) {
-        petData.dateOfBirth = dateOfBirth;
-    }
+    if (dateOfBirth) petData.dateOfBirth = dateOfBirth;
 
     try {
         const data = await apiRequest('/api/owner/pets', {
@@ -667,14 +474,10 @@ registrationForm.addEventListener('submit', async (event) => {
             body: JSON.stringify(petData)
         });
 
-        showMessage(
-            registrationMessage,
-            data.message || 'Pet registration submitted for veterinary review.',
-            'success'
-        );
-
+        showMessage(registrationMessage, data.message || 'Pet registration submitted for review.', 'success');
         registrationForm.reset();
         await loadPets();
+        switchView('mypets');
     } catch (error) {
         showMessage(registrationMessage, error.message, 'error');
     } finally {
@@ -682,16 +485,8 @@ registrationForm.addEventListener('submit', async (event) => {
     }
 });
 
-resetFormButton.addEventListener('click', () => {
-    showMessage(registrationMessage, '');
-});
-
-
+resetFormButton.addEventListener('click', () => { showMessage(registrationMessage, ''); });
 refreshPetsButton.addEventListener('click', loadPets);
-
-refreshNotificationsButton.addEventListener(
-    'click',
-    loadNotifications
-);
+refreshNotificationsButton.addEventListener('click', loadNotifications);
 
 verifyOwner();
