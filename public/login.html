@@ -1,51 +1,61 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | SmartVet</title>
+    <title>Login | VetCare</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/login.css">
     <script src="/js/login.js" defer></script>
-
 </head>
-<body>
-    <header class="site-header">
-        <a class="brand" href="/">
-            <span class="brand-mark">S</span>
-            <span>SmartVet</span>
-        </a>
-    </header>
+<body class="login-body">
 
-    <main class="container">
-        <section class="login-card">
-            <p class="eyebrow">SECURE ACCESS</p>
-            <h1>Welcome back</h1>
-            <p>Sign in to your SmartVet account.</p>
-
-            <form id="loginForm">
-                <div class="form-field">
-                    <label for="email">Email address</label>
-                    <input id="email" name="email" type="email"
-                           autocomplete="username" required>
+    <main class="login-wrapper">
+        <div class="login-card">
+            
+            <!-- Left Column: Form Section -->
+            <section class="login-form-side">
+                <div class="brand-pill">
+                    <span class="brand-pill-text">VetCare</span>
                 </div>
 
-                <div class="form-field">
-                    <label for="password">Password</label>
-                    <input id="password" name="password" type="password"
-                           autocomplete="current-password" required>
+                <div class="form-header">
+                    <h1>Sign in</h1>
+                    <p>Welcome back! Please enter your details.</p>
                 </div>
 
-                <button class="primary-button" id="loginButton" type="submit">
-                    Sign in
-                </button>
+                <form id="loginForm">
+                    <div class="form-field">
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email" placeholder="Enter your email" autocomplete="username" required>
+                    </div>
 
-                <p id="loginMessage" role="status" aria-live="polite"></p>
-            </form>
+                    <div class="form-field">
+                        <label for="password">Password</label>
+                        <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
 
-            <a class="back-link" href="/">Back to SmartVet home</a>
-        </section>
+                    <button class="primary-button submit-btn" id="loginButton" type="submit">
+                        Sign in
+                    </button>
+
+                    <p id="loginMessage" role="status" aria-live="polite"></p>
+                </form>
+
+                <div class="form-footer">
+                    <p>Back to <a class="back-link" href="/">SmartVet Home</a></p>
+                </div>
+            </section>
+
+            <!-- Right Column: Hero Graphic Section -->
+            <section class="login-hero-side">
+                <div class="hero-image-wrapper">
+                    <img src="/images/VetCare.jpg" alt="VetCare Dog Logo" class="dog-hero-img">
+                </div>
+            </section>
+
+        </div>
     </main>
+
 </body>
 </html>

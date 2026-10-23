@@ -906,3 +906,15 @@ button:disabled {
         width: 100%;
     }
 }
+
+.brand-logo-img {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    background: #ffffff;
+    box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.6),
+        0 4px 10px rgba(35, 82, 130, 0.15);
+}
