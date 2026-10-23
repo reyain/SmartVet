@@ -36,10 +36,6 @@
     box-sizing: border-box;
 }
 
-/* ==========================================
-   VETCARE LOGIN - ZOOMED-OUT BACKGROUND
-   ========================================== */
-
 body.login-body {
     min-height: 100vh;
     margin: 0;
@@ -49,36 +45,15 @@ body.login-body {
     color: var(--clay-text);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     line-height: 1.5;
-    padding: 24px;
-
-    /* Base color matching the teal background */
-    background-color: #3b8c9e; 
-    
-    /* Zoom out the background image and align it nicely */
-    background-image: url('/images/background.jpg');
-    background-repeat: no-repeat;
-    background-position: right center; /* Keeps the dog illustration framed on the right */
-    background-size: contain;           /* Zooms out the image to fit without cropping */
+    background-color: var(--clay-bg);
+    background-image:
+        radial-gradient(circle at 10% 10%, rgba(135, 195, 245, 0.5) 0%, transparent 45%),
+        radial-gradient(circle at 90% 15%, rgba(150, 220, 205, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 50% 90%, rgba(175, 185, 248, 0.45) 0%, transparent 50%);
     background-attachment: fixed;
-}
-
-/* Card proportions and spacing */
-.login-card {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 28px;
-    width: 100%;
-    max-width: 880px; /* Slightly tightened card width for better balance */
-    padding: 32px;
-    background: rgba(241, 247, 254, 0.94);
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    border-radius: 28px;
-    box-shadow: 
-        inset 0 2px 5px rgba(255, 255, 255, 0.9),
-        inset 0 -3px 6px rgba(20, 55, 90, 0.08),
-        0 18px 36px rgba(15, 45, 65, 0.25);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding: 24px;
 }
 
 .login-wrapper {

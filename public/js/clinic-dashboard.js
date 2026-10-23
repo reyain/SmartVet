@@ -853,7 +853,7 @@ async function loadFeedingEvents() {
         );
 
         const eventList = document.createElement('div');
-        eventList.className = 'feeding-event-list';
+        eventList.className = 'feeding-events-list';
 
         const dayNames = [
             'Sunday',
@@ -867,7 +867,7 @@ async function loadFeedingEvents() {
 
         events.forEach((event) => {
             const card = document.createElement('article');
-            card.className = 'feeding-event-card';
+            card.className = 'feeding-card';
 
             const petName = event.pet?.name || 'Unknown pet';
             const petCode = event.pet?.petCode || 'No pet code';
@@ -891,7 +891,7 @@ async function loadFeedingEvents() {
                 card,
                 'p',
                 `Status: ${eventStatus}`,
-                'feeding-event-status'
+                `feeding-status ${eventStatus.toLowerCase()}`
             );
 
             const details = document.createElement('dl');
