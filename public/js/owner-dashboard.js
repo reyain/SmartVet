@@ -22,6 +22,76 @@ const overviewPetsCount = document.getElementById('overviewPetsCount');
 const overviewUnreadCount = document.getElementById('overviewUnreadCount');
 
 let ownerVerified = false;
+// Pet photo selection and local preview.
+const petPhotoInput = document.getElementById('petPhoto');
+const petPhotoPreviewContainer = document.getElementById('petPhotoPreviewContainer');
+const petPhotoPreview = document.getElementById('petPhotoPreview');
+const petPhotoFileName = document.getElementById('petPhotoFileName');
+const removePetPhotoButton = document.getElementById('removePetPhotoButton');
+let petPhotoPreviewUrl = null;
+
+function clearPetPhotoPreview() {
+    if (petPhotoPreviewUrl) {
+        URL.revokeObjectURL(petPhotoPreviewUrl);
+        petPhotoPreviewUrl = null;
+    }
+    if (petPhotoInput) petPhotoInput.value = '';
+    if (petPhotoPreview) petPhotoPreview.removeAttribute('src');
+    if (petPhotoFileName) petPhotoFileName.textContent = '';
+    if (petPhotoPreviewContainer) petPhotoPreviewContainer.hidden = true;
+}
+
+if (petPhotoInput && petPhotoPreviewContainer && petPhotoPreview && petPhotoFileName) {
+    petPhotoInput.addEventListener('change', () => {
+        const file = petPhotoInput.files && petPhotoInput.files[0];
+        if (petPhotoPreviewUrl) {
+            URL.revokeObjectURL(petPhotoPreviewUrl);
+            petPhotoPreviewUrl = null;
+        }
+        petPhotoPreview.removeAttribute('src');
+        petPhotoFileName.textContent = '';
+        petPhotoPreviewContainer.hidden = true;
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            petPhotoInput.value = '';
+            showMessage(registrationMessage, 'Choose a JPG, PNG, or WebP image.', 'error');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            petPhotoInput.value = '';
+            showMessage(registrationMessage, 'The pet photo must be 5 MB or smaller.', 'error');
+            return;
+        }
+
+        petPhotoPreviewUrl = URL.createObjectURL(file);
+        petPhotoPreview.src = petPhotoPreviewUrl;
+        petPhotoFileName.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        petPhotoPreviewContainer.hidden = false;
+        showMessage(registrationMessage, '');
+    });
+
+    if (removePetPhotoButton) {
+        removePetPhotoButton.addEventListener('click', () => {
+            clearPetPhotoPreview();
+            showMessage(registrationMessage, 'Pet photo removed.');
+        });
+    }
+
+    if (registrationForm) {
+        registrationForm.addEventListener('reset', () => {
+            if (petPhotoPreviewUrl) {
+                URL.revokeObjectURL(petPhotoPreviewUrl);
+                petPhotoPreviewUrl = null;
+            }
+            if (petPhotoPreview) petPhotoPreview.removeAttribute('src');
+            if (petPhotoFileName) petPhotoFileName.textContent = '';
+            if (petPhotoPreviewContainer) petPhotoPreviewContainer.hidden = true;
+        });
+    }
+}
+
 
 // Sidebar & View Navigation Logic
 function switchView(targetView) {

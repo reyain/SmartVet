@@ -212,6 +212,17 @@
                             </div>
                         </div>
 
+                        <div class="form-field pet-photo-field">
+                            <label for="petPhoto">Pet photo (optional)</label>
+                            <input id="petPhoto" name="petPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+                            <p class="form-help">JPG, PNG, or WebP. Maximum file size: 5 MB.</p>
+                            <div id="petPhotoPreviewContainer" class="pet-photo-preview-container" hidden>
+                                <img id="petPhotoPreview" class="pet-photo-preview" alt="Selected pet photo preview">
+                                <p id="petPhotoFileName" class="form-help"></p>
+                                <button id="removePetPhotoButton" class="secondary-button" type="button">Remove Photo</button>
+                            </div>
+                        </div>
+
                         <p class="form-help">Fields marked * are required.</p>
 
                         <p id="registrationMessage" class="message" role="status" aria-live="polite"></p>
