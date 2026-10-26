@@ -157,7 +157,9 @@ async function apiRequest(url, options = {}) {
         headers: {
             Accept: 'application/json',
             Authorization: `Bearer ${token}`,
-            ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+            ...(options.body && !(options.body instanceof FormData)
+                ? { 'Content-Type': 'application/json' }
+                : {}),
             ...options.headers
         }
     });
@@ -539,9 +541,36 @@ registrationForm.addEventListener('submit', async (event) => {
     if (dateOfBirth) petData.dateOfBirth = dateOfBirth;
 
     try {
+        const uploadData = new FormData();
+
+        uploadData.append('name', petData.name);
+        uploadData.append('species', petData.species);
+
+        if (petData.breed) {
+            uploadData.append('breed', petData.breed);
+        }
+
+        if (petData.sex) {
+            uploadData.append('sex', petData.sex);
+        }
+
+        if (petData.color) {
+            uploadData.append('color', petData.color);
+        }
+
+        if (petData.dateOfBirth) {
+            uploadData.append('dateOfBirth', petData.dateOfBirth);
+        }
+
+        const photoInput = document.getElementById('petPhoto');
+
+        if (photoInput && photoInput.files.length > 0) {
+            uploadData.append('petPhoto', photoInput.files[0]);
+        }
+
         const data = await apiRequest('/api/owner/pets', {
             method: 'POST',
-            body: JSON.stringify(petData)
+            body: uploadData
         });
 
         showMessage(registrationMessage, data.message || 'Pet registration submitted for review.', 'success');

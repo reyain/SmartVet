@@ -25,7 +25,13 @@ const iotRoutes = require('./src/routes/iotRoutes');
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            imgSrc: ["'self'", "data:", "blob:"]
+        }
+    }
+}));
 app.use(express.json({ limit: '10kb' }));
 
 // Authentication endpoints.

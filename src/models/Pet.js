@@ -68,6 +68,33 @@ const petSchema = new mongoose.Schema(
             default: ''
         },
 
+                // Optional pet photo metadata.
+        photoFilename: {
+            type: String,
+            trim: true,
+            default: undefined
+        },
+
+        photoContentType: {
+            type: String,
+            enum: ['image/jpeg', 'image/png', 'image/webp'],
+            default: undefined
+        },
+
+        photoOriginalName: {
+            type: String,
+            trim: true,
+            maxlength: 255,
+            default: undefined
+        },
+
+        photoSize: {
+            type: Number,
+            min: 1,
+            max: 5 * 1024 * 1024,
+            default: undefined
+        },
+        
         // Owner submissions begin as pending.
         registrationStatus: {
             type: String,

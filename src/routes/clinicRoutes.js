@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const QRCode = require('qrcode');
+const path = require('path');
 
 const Pet = require('../models/Pet');
 const VaccinationRecord = require('../models/VaccinationRecord');
@@ -17,6 +18,58 @@ const router = express.Router();
 
 // All routes in this file require a logged-in veterinary user.
 router.use(requireAuth, authorizeRoles('veterinary'));
+
+// Serve a pet photo only to authenticated veterinary staff.
+router.get('/pets/:petId/photo', async (req, res, next) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.petId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid pet ID.'
+            });
+        }
+
+        const pet = await Pet.findById(req.params.petId)
+            .select('photoFilename photoContentType')
+            .lean();
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                message: 'Pet not found.'
+            });
+        }
+
+        if (!pet.photoFilename || !pet.photoContentType) {
+            return res.status(404).json({
+                success: false,
+                message: 'No pet photo is available.'
+            });
+        }
+
+        const photoDirectory = path.join(
+            __dirname,
+            '../../uploads/pet-photos'
+        );
+
+        const photoPath = path.join(
+            photoDirectory,
+            path.basename(pet.photoFilename)
+        );
+
+        res.set('Content-Type', pet.photoContentType);
+        res.set('Cache-Control', 'private, no-store');
+        res.set('X-Content-Type-Options', 'nosniff');
+
+        return res.sendFile(photoPath, (error) => {
+            if (error && !res.headersSent) {
+                return next(error);
+            }
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
 
 // Generate an official Pet ID.
 // Example: PET-A1B2C3D4
@@ -44,9 +97,7 @@ router.get('/pets/pending', async (req, res, next) => {
         const pets = await Pet.find({
             registrationStatus: 'pending'
         })
-            .select(
-                'ownerUserId name species breed sex dateOfBirth color registrationStatus createdAt'
-            )
+            .select('ownerUserId name species breed sex dateOfBirth color photoFilename photoContentType registrationStatus createdAt')
             .populate('ownerUserId', 'fullName email')
             .sort({ createdAt: 1 })
             .lean();
@@ -69,6 +120,7 @@ router.get('/pets/pending', async (req, res, next) => {
                 sex: pet.sex,
                 dateOfBirth: pet.dateOfBirth || null,
                 color: pet.color,
+                hasPhoto: Boolean(pet.photoFilename && pet.photoContentType),
                 registrationStatus: pet.registrationStatus,
                 submittedAt: pet.createdAt
             }))

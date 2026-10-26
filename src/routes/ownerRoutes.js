@@ -3,6 +3,11 @@ const mongoose = require('mongoose');
 const QRCode = require('qrcode');
 const { body, validationResult } = require('express-validator');
 
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const multer = require('multer');
+
 
 const Pet = require('../models/Pet');
 const VaccinationRecord = require('../models/VaccinationRecord');
@@ -14,6 +19,83 @@ const {
 } = require('../middleware/authMiddleware');
 
 const router = express.Router();
+
+// Store pet photos outside the public frontend directory.
+const petPhotoDirectory = path.join(__dirname, '../../uploads/pet-photos');
+
+fs.mkdirSync(petPhotoDirectory, { recursive: true });
+
+const allowedPetPhotoTypes = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp'
+};
+
+const petPhotoStorage = multer.diskStorage({
+    destination: (_req, _file, callback) => {
+        callback(null, petPhotoDirectory);
+    },
+    filename: (_req, file, callback) => {
+        const extension = allowedPetPhotoTypes[file.mimetype];
+
+        callback(
+            null,
+            `${crypto.randomBytes(16).toString('hex')}${extension}`
+        );
+    }
+});
+
+const petPhotoUpload = multer({
+    storage: petPhotoStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+        files: 1
+    },
+    fileFilter: (_req, file, callback) => {
+        if (!Object.prototype.hasOwnProperty.call(
+            allowedPetPhotoTypes,
+            file.mimetype
+        )) {
+            const error = new Error(
+                'Pet photo must be a JPG, PNG, or WebP image.'
+            );
+
+            error.code = 'INVALID_PET_PHOTO_TYPE';
+            return callback(error);
+        }
+
+        callback(null, true);
+    }
+});
+
+function handlePetPhotoUpload(req, res, next) {
+    petPhotoUpload.single('petPhoto')(req, res, (error) => {
+        if (!error) {
+            return next();
+        }
+
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({
+                success: false,
+                message: 'Pet photo must not exceed 5 MB.'
+            });
+        }
+
+        if (
+            error.code === 'LIMIT_UNEXPECTED_FILE' ||
+            error.code === 'INVALID_PET_PHOTO_TYPE'
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: error.code === 'INVALID_PET_PHOTO_TYPE'
+                    ? error.message
+                    : 'Only one pet photo may be uploaded.'
+            });
+        }
+
+        return next(error);
+    });
+}
 
 // All endpoints in this router require an authenticated pet owner.
 router.use(requireAuth, authorizeRoles('owner'));
@@ -37,6 +119,7 @@ router.get('/', (req, res) => {
 // Submit a pet registration for veterinary review.
 router.post(
     '/pets',
+    handlePetPhotoUpload,
     [
         body('name')
             .isString()
@@ -106,6 +189,10 @@ router.post(
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
+                if (req.file) {
+                    fs.unlink(req.file.path, () => {});
+                }
+                
             return res.status(400).json({
                 success: false,
                 message: 'Please correct the pet registration details.',
@@ -124,6 +211,15 @@ router.post(
                 species: req.body.species.trim().toLowerCase(),
                 registrationStatus: 'pending'
             };
+
+            if (req.file) {
+                petData.photoFilename = req.file.filename;
+                petData.photoContentType = req.file.mimetype;
+                petData.photoOriginalName = path.basename(req.file.originalname)
+                    .replace(/[\\/:*?"<>|]/g, '_')
+                    .slice(0, 255);
+                petData.photoSize = req.file.size;
+            }
 
             if (req.body.breed !== undefined) {
                 petData.breed = req.body.breed.trim();
@@ -161,6 +257,10 @@ router.post(
                 }
             });
         } catch (error) {
+            if (req.file) {
+                fs.unlink(req.file.path, () => {});
+            }
+
             return next(error);
         }
     }

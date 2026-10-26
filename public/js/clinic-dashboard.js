@@ -249,6 +249,39 @@ function createPetCard(pet) {
     const card = document.createElement('article');
     card.className = 'pet-card';
 
+    if (pet.hasPhoto) {
+    const photo = document.createElement('img');
+
+    photo.className = 'pending-pet-photo';
+    photo.alt = `${pet.name || 'Pet'} photo`;
+    photo.loading = 'lazy';
+
+    const token = getToken();
+
+    fetch(`/api/clinic/pets/${encodeURIComponent(pet.id)}/photo`, {
+        headers: {
+            Accept: 'image/jpeg, image/png, image/webp',
+            Authorization: `Bearer ${token}`
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Unable to load pet photo.');
+            }
+
+            return response.blob();
+        })
+        .then(blob => {
+            photo.src = URL.createObjectURL(blob);
+        })
+        .catch(() => {
+            photo.alt = 'Pet photo unavailable';
+            photo.classList.add('pet-photo-unavailable');
+        });
+
+    card.appendChild(photo);
+}
+
     addText(card, 'h3', pet.name || 'Unnamed pet');
     addText(card, 'p', `Species: ${pet.species || 'Not provided'}`);
     addText(card, 'p', `Breed: ${pet.breed || 'Not provided'}`);
