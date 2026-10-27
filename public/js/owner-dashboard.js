@@ -268,6 +268,42 @@ function createPetCard(pet) {
     const card = document.createElement('article');
     card.className = 'pet-card';
 
+    if (pet.hasPhoto && pet.id) {
+    const photo = document.createElement('img');
+
+    photo.className = 'registered-pet-photo';
+    photo.alt = `${pet.name || 'Pet'} photo`;
+    photo.loading = 'lazy';
+
+    fetch(`/api/owner/pets/${encodeURIComponent(pet.id)}/photo`, {
+        headers: {
+            Accept: 'image/jpeg, image/png, image/webp',
+            Authorization: `Bearer ${token}`
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Unable to load pet photo.');
+            }
+
+            return response.blob();
+        })
+        .then(blob => {
+            const imageUrl = URL.createObjectURL(blob);
+            photo.src = imageUrl;
+
+            photo.addEventListener('load', () => {
+                URL.revokeObjectURL(imageUrl);
+            }, { once: true });
+        })
+        .catch(() => {
+            photo.alt = 'Pet photo unavailable';
+            photo.classList.add('pet-photo-unavailable');
+        });
+
+    card.appendChild(photo);
+}
+
     const name = document.createElement('h3');
     name.textContent = pet.name || 'Unnamed pet';
 

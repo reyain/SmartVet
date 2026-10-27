@@ -100,6 +100,69 @@ function handlePetPhotoUpload(req, res, next) {
 // All endpoints in this router require an authenticated pet owner.
 router.use(requireAuth, authorizeRoles('owner'));
 
+// Allow an owner to view a photo belonging to their own pet.
+router.get('/pets/:petId/photo', async (req, res, next) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.petId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid pet ID.'
+            });
+        }
+
+        const pet = await Pet.findOne({
+            _id: req.params.petId,
+            ownerUserId: req.user.id
+        })
+            .select('photoFilename photoContentType')
+            .lean();
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                message: 'Pet not found.'
+            });
+        }
+
+        if (!pet.photoFilename || !pet.photoContentType) {
+            return res.status(404).json({
+                success: false,
+                message: 'No pet photo is available.'
+            });
+        }
+
+        const filename = path.basename(pet.photoFilename);
+
+        if (
+            filename !== pet.photoFilename ||
+            !/^[a-f0-9]{32}\.(jpg|png|webp)$/i.test(filename)
+        ) {
+            return res.status(404).json({
+                success: false,
+                message: 'Pet photo is unavailable.'
+            });
+        }
+
+        const photoPath = path.join(
+            __dirname,
+            '../../uploads/pet-photos',
+            filename
+        );
+
+        res.set('Content-Type', pet.photoContentType);
+        res.set('Cache-Control', 'private, no-store');
+        res.set('X-Content-Type-Options', 'nosniff');
+
+        return res.sendFile(photoPath, (error) => {
+            if (error && !res.headersSent) {
+                return next(error);
+            }
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
 // GET /api/owner
 // Verify that the authenticated user can access the owner area.
 router.get('/', (req, res) => {
@@ -275,7 +338,7 @@ router.get('/pets', async (req, res, next) => {
             ownerUserId: req.user.id
         })
             .select(
-                'petCode name species breed sex dateOfBirth color registrationStatus createdAt'
+                'petCode name species breed sex dateOfBirth color photoFilename photoContentType registrationStatus createdAt'
             )
             .sort({ createdAt: -1 })
             .lean();
@@ -291,6 +354,7 @@ router.get('/pets', async (req, res, next) => {
                 sex: pet.sex,
                 dateOfBirth: pet.dateOfBirth || null,
                 color: pet.color,
+                hasPhoto: Boolean(pet.photoFilename && pet.photoContentType),
                 registrationStatus: pet.registrationStatus,
 
                 // Show the official Pet ID only after approval.
