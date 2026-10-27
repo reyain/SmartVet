@@ -62,6 +62,16 @@
                     <span class="nav-count" id="sidebarPetsCount">—</span>
                 </button>
 
+                
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-view="feeding">
+                    <span class="nav-icon" aria-hidden="true">🍽️</span>
+                    <span>Feeding History</span>
+                </button>
+
+
                 <button
                     type="button"
                     class="nav-item"
@@ -260,6 +270,74 @@
                     <div class="empty-state">Loading your pets...</div>
                 </div>
             </section>
+
+            
+            <!-- FEEDING HISTORY VIEW -->
+            <section class="owner-view" id="feedingSection" data-page="feeding" hidden>
+                <div class="page-heading">
+                    <div>
+                        <p class="page-eyebrow">PET CARE</p>
+                        <h1>Feeding History</h1>
+                        <p class="muted">
+                            Review feeding events recorded for your pets, including
+                            feeding status and the amount of food dispensed when reported.
+                        </p>
+                    </div>
+
+                    <button
+                        id="refreshOwnerFeedingEventsButton"
+                        class="secondary-button"
+                        type="button">
+                        Refresh Feeding History
+                    </button>
+                </div>
+
+                
+                <div class="owner-feeding-filters">
+                    <label for="ownerFeedingPetFilter">
+                        Filter by pet
+                        <select id="ownerFeedingPetFilter">
+                            <option value="">All my pets</option>
+                        </select>
+                    </label>
+
+                    <label for="ownerFeedingStatusFilter">
+                        Filter by status
+                        <select id="ownerFeedingStatusFilter">
+                            <option value="">All statuses</option>
+                            <option value="running">In progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </label>
+
+                    <button
+                        id="applyOwnerFeedingFiltersButton"
+                        class="secondary-button"
+                        type="button">
+                        Apply Filters
+                    </button>
+                </div>
+
+
+                <p
+                    id="ownerFeedingEventsSummary"
+                    class="message"
+                    role="status"
+                    aria-live="polite">
+                    Feeding history has not been loaded yet.
+                </p>
+
+                <div
+                    id="ownerFeedingEventList"
+                    class="feeding-events-list">
+                    <div class="empty-state">
+                        Open Feeding History to load your pets' feeding events.
+                    </div>
+                </div>
+            </section>
+
 
             <!-- NOTIFICATIONS VIEW -->
             <section class="owner-view" id="notificationsSection" data-page="notifications" hidden>

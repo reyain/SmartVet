@@ -71,6 +71,14 @@
                 <span>Feeding History</span>
             </button>
 
+            <button
+                type="button"
+                class="nav-item"
+                data-view="devices">
+                <span class="nav-icon" aria-hidden="true">📡</span>
+                <span>Device Management</span>
+            </button>
+
         </nav>
 
         <div class="sidebar-footer">
@@ -439,6 +447,156 @@
                     Dispensed quantities are reported values. Simulated
                     events do not represent measurements from physical
                     feeder hardware.
+                </p>
+            </section>
+        </section>
+
+                <!-- DEVICE MANAGEMENT -->
+        <section
+            id="devicesSection"
+            data-page="devices"
+            hidden>
+
+            <div class="page-heading">
+                <div>
+                    <p class="page-eyebrow">IOT DEVICE CONTROL</p>
+                    <h1>Device Management</h1>
+                    <p class="muted">
+                        Register feeders and activity-monitoring collars,
+                        assign approved pets, and manage registered devices.
+                    </p>
+                </div>
+            </div>
+
+            <!-- REGISTER DEVICE -->
+            <section class="workspace-panel">
+                <div class="section-heading">
+                    <div>
+                        <h2>Register a Device</h2>
+                        <p class="muted">
+                            Register a feeder or collar for an approved pet.
+                        </p>
+                    </div>
+                </div>
+
+                <form id="deviceRegistrationForm">
+                    <div class="form-group">
+                        <label for="deviceCodeInput">Device Code</label>
+                        <input
+                            type="text"
+                            id="deviceCodeInput"
+                            name="deviceCode"
+                            placeholder="Example: FEEDER-001"
+                            minlength="3"
+                            maxlength="100"
+                            pattern="[A-Za-z0-9_-]+"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deviceTypeInput">Device Type</label>
+                        <select
+                            id="deviceTypeInput"
+                            name="deviceType"
+                            required>
+                            <option value="feeder">Automatic Feeder</option>
+                            <option value="collar">Activity Monitoring Collar</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="devicePetSelect">Assign to Pet</label>
+                        <select
+                            id="devicePetSelect"
+                            name="petId">
+                            <option value="">No pet assigned</option>
+                        </select>
+                        <p class="muted">
+                            Only approved pets should be assigned.
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deviceFirmwareVersionInput">
+                            Firmware Version
+                        </label>
+                        <input
+                            type="text"
+                            id="deviceFirmwareVersionInput"
+                            name="firmwareVersion"
+                            maxlength="50"
+                            placeholder="Example: 1.0.0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deviceDescriptionInput">Description</label>
+                        <textarea
+                            id="deviceDescriptionInput"
+                            name="description"
+                            maxlength="500"
+                            rows="3"
+                            placeholder="Optional device description"></textarea>
+                    </div>
+
+                    <button type="submit" id="registerDeviceButton">
+                        Register Device
+                    </button>
+
+                    <p
+                        id="deviceRegistrationMessage"
+                        class="muted"
+                        role="status"
+                        aria-live="polite">
+                    </p>
+                </form>
+
+                <div id="deviceTokenPanel" hidden>
+                    <h3>Device Registered Successfully</h3>
+                    <p>
+                        This device token is displayed only once.
+                        Save it securely before leaving this page.
+                    </p>
+                    <code id="deviceTokenOutput"></code>
+                    <button
+                        type="button"
+                        id="copyDeviceTokenButton">
+                        Copy Device Token
+                    </button>
+                </div>
+            </section>
+
+            <!-- REGISTERED DEVICES -->
+            <section class="workspace-panel">
+                <div class="section-heading">
+                    <div>
+                        <h2>Registered Devices</h2>
+                        <p class="muted">
+                            Review device assignments and current statuses.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="secondary"
+                        id="refreshDevicesButton">
+                        Refresh Devices
+                    </button>
+                </div>
+
+                <div
+                    id="devicesList"
+                    aria-live="polite"
+                    aria-busy="false">
+                    <p class="muted">
+                        Open Device Management to load registered devices.
+                    </p>
+                </div>
+
+                <p
+                    id="deviceManagementMessage"
+                    class="muted"
+                    role="status"
+                    aria-live="polite">
                 </p>
             </section>
         </section>

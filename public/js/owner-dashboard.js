@@ -15,6 +15,15 @@ const refreshNotificationsButton = document.getElementById('refreshNotifications
 const notificationsSummary = document.getElementById('notificationsSummary');
 const ownerNotificationList = document.getElementById('ownerNotificationList');
 
+// Owner Feeding History
+const refreshOwnerFeedingEventsButton = document.getElementById('refreshOwnerFeedingEventsButton');
+const ownerFeedingEventsSummary = document.getElementById('ownerFeedingEventsSummary');
+const ownerFeedingEventList = document.getElementById('ownerFeedingEventList');
+
+const ownerFeedingPetFilter = document.getElementById('ownerFeedingPetFilter');
+const ownerFeedingStatusFilter = document.getElementById('ownerFeedingStatusFilter');
+const applyOwnerFeedingFiltersButton = document.getElementById('applyOwnerFeedingFiltersButton');
+
 // Sidebar counts & Overview stats
 const sidebarPetsCount = document.getElementById('sidebarPetsCount');
 const sidebarUnreadCount = document.getElementById('sidebarUnreadCount');
@@ -453,6 +462,202 @@ function createNotificationCard(notification) {
     return card;
 }
 
+
+function formatOwnerFeedingTimestamp(value) {
+    if (!value) {
+        return 'Not recorded';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return 'Not available';
+    }
+
+    return date.toLocaleString();
+}
+
+
+function createOwnerFeedingEventCard(event) {
+    const card = document.createElement('article');
+    card.className = 'owner-feeding-event-card';
+
+    const petName = event.pet?.name || 'Unknown pet';
+
+    const heading = document.createElement('h3');
+    heading.textContent = petName;
+    card.appendChild(heading);
+
+    function addDetail(label, value) {
+        const detail = document.createElement('p');
+        detail.textContent = `${label}: ${value}`;
+        card.appendChild(detail);
+    }
+
+    const statusLabels = {
+        running: 'In progress',
+        completed: 'Completed',
+        failed: 'Failed',
+        cancelled: 'Cancelled'
+    };
+
+    addDetail(
+        'Status',
+        statusLabels[event.status] || event.status || 'Unknown'
+    );
+
+    const statusMessages = {
+        running: 'Feeding has started. The final outcome has not been recorded yet.',
+        completed:
+            event.dispensedGrams !== undefined &&
+            event.dispensedGrams !== null
+                ? `Feeding was marked completed. The reported dispensed amount is ${event.dispensedGrams} g.`
+                : 'Feeding was marked completed, but the dispensed amount was not reported.',
+        failed: event.failureReason
+            ? `Feeding failed. Reason: ${event.failureReason}`
+            : 'This feeding attempt failed. No failure reason was recorded.',
+        cancelled: event.failureReason
+            ? `Feeding was cancelled. Reason: ${event.failureReason}`
+            : 'This feeding attempt was cancelled. No cancellation reason was recorded.'
+    };
+
+    const outcome = document.createElement('p');
+    outcome.className = 'feeding-outcome-message';
+    outcome.textContent =
+        statusMessages[event.status] ||
+        'Additional feeding-result details are unavailable.';
+    card.appendChild(outcome);
+
+    addDetail(
+        'Feeding type',
+        event.source === 'manual' ? 'Manual' : 'Scheduled'
+    );
+
+    addDetail('Requested food', `${event.requestedGrams} g`);
+
+    addDetail(
+        'Dispensed food',
+        event.dispensedGrams !== undefined &&
+        event.dispensedGrams !== null
+            ? `${event.dispensedGrams} g`
+            : 'Not reported'
+    );
+
+    addDetail('Started', formatOwnerFeedingTimestamp(event.startedAt));
+    addDetail('Completed', formatOwnerFeedingTimestamp(event.completedAt));
+
+    const statusClass = String(event.status || 'unknown')
+        .toLowerCase()
+        .replace(/[^a-z-]/g, '');
+
+    card.classList.add(`feeding-status-${statusClass}`);
+
+    return card;
+}
+
+
+async function populateOwnerFeedingPetFilter() {
+    if (
+        !ownerFeedingPetFilter ||
+        ownerFeedingPetFilter.dataset.loaded === 'true'
+    ) {
+        return;
+    }
+
+    try {
+        const data = await apiRequest('/api/owner/pets');
+        const pets = Array.isArray(data.pets) ? data.pets : [];
+
+        pets.forEach((pet) => {
+            const option = document.createElement('option');
+            option.value = pet.id;
+            option.textContent = pet.species
+                ? `${pet.name} (${pet.species})`
+                : pet.name;
+
+            ownerFeedingPetFilter.appendChild(option);
+        });
+
+        ownerFeedingPetFilter.dataset.loaded = 'true';
+    } catch (error) {
+        console.error('Unable to load pets for feeding filters:', error);
+    }
+}
+
+    async function loadOwnerFeedingEvents() {
+    if (!refreshOwnerFeedingEventsButton || !ownerFeedingEventList) {
+        return;
+    }
+
+    refreshOwnerFeedingEventsButton.disabled = true;
+
+    showMessage(
+        ownerFeedingEventsSummary,
+        'Loading feeding history...'
+    );
+
+    ownerFeedingEventList.replaceChildren();
+
+    try {
+        await populateOwnerFeedingPetFilter();
+
+const params = new URLSearchParams();
+
+if (ownerFeedingPetFilter?.value) {
+    params.set('petId', ownerFeedingPetFilter.value);
+}
+
+if (ownerFeedingStatusFilter?.value) {
+    params.set('status', ownerFeedingStatusFilter.value);
+}
+
+const query = params.toString();
+const endpoint = query
+    ? `/api/owner/feeding-events?${query}`
+    : '/api/owner/feeding-events';
+
+const data = await apiRequest(endpoint);
+        const events = Array.isArray(data.events) ? data.events : [];
+
+        if (events.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-state';
+            empty.textContent =
+                'No feeding events have been recorded for your pets yet.';
+
+            ownerFeedingEventList.appendChild(empty);
+
+            showMessage(
+                ownerFeedingEventsSummary,
+                'No feeding events found.'
+            );
+
+            return;
+        }
+
+        events.forEach((event) => {
+            ownerFeedingEventList.appendChild(
+                createOwnerFeedingEventCard(event)
+            );
+        });
+
+        showMessage(
+            ownerFeedingEventsSummary,
+            `${events.length} feeding event(s) loaded.`,
+            'success'
+        );
+    } catch (error) {
+        showMessage(
+            ownerFeedingEventsSummary,
+            error.message || 'Unable to load feeding history.',
+            'error'
+        );
+    } finally {
+        refreshOwnerFeedingEventsButton.disabled = false;
+    }
+}
+
+
 async function loadNotifications() {
     refreshNotificationsButton.disabled = true;
     showMessage(notificationsSummary, 'Loading notifications...');
@@ -623,5 +828,20 @@ registrationForm.addEventListener('submit', async (event) => {
 resetFormButton.addEventListener('click', () => { showMessage(registrationMessage, ''); });
 refreshPetsButton.addEventListener('click', loadPets);
 refreshNotificationsButton.addEventListener('click', loadNotifications);
+
+
+const feedingHistoryNavButton = document.querySelector('[data-view="feeding"]');
+
+if (feedingHistoryNavButton) {
+    feedingHistoryNavButton.addEventListener('click', loadOwnerFeedingEvents);
+}
+
+if (refreshOwnerFeedingEventsButton) {
+    refreshOwnerFeedingEventsButton.addEventListener('click', loadOwnerFeedingEvents);
+}
+
+if (applyOwnerFeedingFiltersButton) {
+    applyOwnerFeedingFiltersButton.addEventListener('click', loadOwnerFeedingEvents);
+}
 
 verifyOwner();

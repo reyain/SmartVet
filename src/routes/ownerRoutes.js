@@ -13,6 +13,8 @@ const Pet = require('../models/Pet');
 const VaccinationRecord = require('../models/VaccinationRecord');
 const Notification = require('../models/Notification');
 
+const FeedingEvent = require('../models/FeedingEvent');
+
 const {
     requireAuth,
     authorizeRoles
@@ -551,7 +553,112 @@ router.get('/pets/:petId/vaccinations', async (req, res, next) => {
     }
 });
 
+// GET /api/owner/feeding-events
+// Retrieve feeding history only for pets belonging to the logged-in owner.
+router.get('/feeding-events', async (req, res, next) => {
+    try {
+        const allowedStatuses = [
+            'running',
+            'completed',
+            'failed',
+            'cancelled'
+        ];
 
+        const ownedPets = await Pet.find({
+            ownerUserId: req.user.id
+        })
+            .select('_id name species petCode registrationStatus')
+            .lean();
+
+        const ownedPetIds = ownedPets.map((pet) => pet._id);
+
+        const filter = {
+            petId: { $in: ownedPetIds }
+        };
+
+        if (req.query.petId !== undefined) {
+            if (
+                typeof req.query.petId !== 'string' ||
+                !mongoose.isValidObjectId(req.query.petId)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'A valid pet ID is required.'
+                });
+            }
+
+            const selectedPet = ownedPets.find(
+                (pet) => pet._id.toString() === req.query.petId
+            );
+
+            if (!selectedPet) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Pet not found in your account.'
+                });
+            }
+
+            filter.petId = selectedPet._id;
+        }
+
+        if (req.query.status !== undefined) {
+            if (
+                typeof req.query.status !== 'string' ||
+                !allowedStatuses.includes(req.query.status)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid feeding event status.'
+                });
+            }
+
+            filter.status = req.query.status;
+        }
+
+        const records = await FeedingEvent.find(filter)
+            .populate(
+                'petId',
+                'name species petCode registrationStatus'
+            )
+            .sort({ startedAt: -1 })
+            .limit(200)
+            .lean();
+
+        const events = records.map((event) => ({
+            id: event._id.toString(),
+            eventId: event.eventId,
+
+            pet: event.petId
+                ? {
+                    id: event.petId._id.toString(),
+                    name: event.petId.name,
+                    species: event.petId.species,
+                    petCode:
+                        event.petId.registrationStatus === 'approved'
+                            ? event.petId.petCode
+                            : undefined
+                }
+                : null,
+
+            source: event.source,
+            status: event.status,
+            requestedGrams: event.requestedGrams,
+            dispensedGrams: event.dispensedGrams,
+            startedAt: event.startedAt,
+            completedAt: event.completedAt,
+            failureReason: event.failureReason,
+            createdAt: event.createdAt
+        }));
+
+        return res.status(200).json({
+            success: true,
+            count: events.length,
+            events
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
 
 /**
  * GET /api/owner/notifications

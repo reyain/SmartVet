@@ -43,7 +43,8 @@ const views = {
     overview: document.getElementById('overviewSection'),
     pending: document.getElementById('pendingSection'),
     vaccinations: document.getElementById('vaccinationSection'),
-    feedingEvents: document.getElementById('feedingEventsSection')
+    feedingEvents: document.getElementById('feedingEventsSection'),
+    devices: document.getElementById('devicesSection')
 };
 
 const tokenKey = 'smartvetAccessToken';

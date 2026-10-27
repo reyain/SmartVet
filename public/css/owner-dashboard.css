@@ -759,3 +759,140 @@ button:disabled {
         inset 0 2px 4px rgba(255, 255, 255, 0.6),
         0 4px 10px rgba(35, 82, 130, 0.15);
 }
+
+/* Pet photo on the My Registered Pets cards */
+.registered-pet-photo {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    height: 190px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 16px;
+    margin: 0 0 16px;
+    background-color: #f1f3f5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Fallback styling if a photo cannot be loaded */
+.registered-pet-photo.pet-photo-unavailable {
+    object-fit: contain;
+    padding: 12px;
+    color: #666;
+}
+
+
+/* Owner Feeding History */
+.owner-feeding-event-card {
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    background: var(--clay-card, #ffffff);
+    box-shadow: var(--clay-shadow, 0 4px 12px rgba(0, 0, 0, 0.06));
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.owner-feeding-event-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.owner-feeding-event-card h3 {
+    margin: 0 0 12px;
+    color: var(--clay-heading, #263238);
+    font-size: 1.15rem;
+}
+
+.owner-feeding-event-card p {
+    margin: 8px 0;
+    color: var(--clay-muted, #5f6b73);
+    overflow-wrap: anywhere;
+}
+
+.owner-feeding-event-card.feeding-status-completed {
+    border-left: 5px solid #16a34a;
+}
+
+.owner-feeding-event-card.feeding-status-running {
+    border-left: 5px solid #2563eb;
+}
+
+.owner-feeding-event-card.feeding-status-failed {
+    border-left: 5px solid #dc2626;
+}
+
+.owner-feeding-event-card.feeding-status-cancelled {
+    border-left: 5px solid #d97706;
+}
+
+
+/* Feeding History filter toolbar */
+.owner-feeding-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    margin: 22px 0;
+    padding: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.48);
+    box-shadow: 0 5px 14px rgba(50, 80, 120, 0.06);
+}
+
+/* Labels above dropdowns */
+.owner-feeding-filters label {
+    display: flex;
+    flex: 1 1 220px;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 320px;
+    color: var(--clay-heading, #243b53);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Pet and status dropdowns */
+.owner-feeding-filters select {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 38px 10px 12px;
+    border: 1px solid #cbd9e8;
+    border-radius: 12px;
+    background-color: #ffffff;
+    color: #243b53;
+    font: inherit;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.owner-feeding-filters select:focus {
+    outline: 3px solid rgba(37, 99, 235, 0.2);
+    border-color: #3b82f6;
+}
+
+.owner-feeding-filters button {
+    min-height: 44px;
+    flex-shrink: 0;
+}
+
+/* Make filters fit smaller screens */
+@media (max-width: 600px) {
+    .owner-feeding-filters {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+        padding: 14px;
+    }
+
+    .owner-feeding-filters label {
+        max-width: none;
+        width: 100%;
+    }
+
+    .owner-feeding-filters button {
+        width: 100%;
+    }
+}

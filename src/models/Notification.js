@@ -26,6 +26,7 @@ const notificationSchema = new mongoose.Schema(
                 'vaccination_overdue',
                 'feeding_completed',
                 'feeding_failed',
+                'feeding_cancelled',
                 'registration_approved',
                 'registration_needs_verification',
                 'device_offline',

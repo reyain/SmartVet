@@ -8,6 +8,8 @@ const FeedingSchedule = require('../models/FeedingSchedule');
 const FeedingEvent = require('../models/FeedingEvent');
 const AuditLog = require('../models/AuditLog');
 
+const Notification = require('../models/Notification');
+
 const { requireDeviceAuth } =
     require('../middleware/deviceAuthMiddleware');
 
@@ -254,6 +256,61 @@ router.post(
                 triggeredBy,
                 failureReason: req.body.failureReason || ''
             });
+
+            // Notify the pet owner when a feeding attempt fails or is cancelled.
+            if (pet.ownerUserId && ['failed', 'cancelled'].includes(status)) {
+                const notificationType =
+                    status === 'failed' ? 'feeding_failed' : 'feeding_cancelled';
+
+                const notificationTitle =
+                    status === 'failed'
+                        ? `Feeding failed: ${pet.name}`
+                        : `Feeding cancelled: ${pet.name}`;
+
+                const outcome =
+                    status === 'failed' ? 'failed' : 'was cancelled';
+
+                const reasonText = event.failureReason
+                    ? ` Reason: ${event.failureReason}`
+                    : '';
+
+                const notificationMessage =
+                    `The feeding attempt for ${pet.name} ${outcome}.${reasonText}`
+                        .slice(0, 1000);
+
+                // Use the saved event ID to prevent duplicate notifications.
+                const dedupeKey = `feeding-event:${event._id.toString()}`;
+
+                try {
+                    await Notification.updateOne(
+                        {
+                            userId: pet.ownerUserId,
+                            dedupeKey
+                        },
+                        {
+                            $setOnInsert: {
+                                userId: pet.ownerUserId,
+                                petId: pet._id,
+                                type: notificationType,
+                                title: notificationTitle,
+                                message: notificationMessage,
+                                relatedRecordType: 'feeding_event',
+                                relatedRecordId: event._id,
+                                dedupeKey,
+                                priority: status === 'failed' ? 'high' : 'normal'
+                            }
+                        },
+                        { upsert: true }
+                    );
+                } catch (notificationError) {
+                    // Do not turn a successfully recorded feeding event into a failed
+                    // device request just because notification creation failed.
+                    console.error(
+                        'Unable to create feeding notification:',
+                        notificationError.message
+                    );
+                }
+            }
 
             await AuditLog.create({
                 source: 'device',
