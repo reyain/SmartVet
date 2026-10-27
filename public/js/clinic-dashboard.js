@@ -25,6 +25,24 @@ const feedingStatusFilter = document.getElementById('feedingStatusFilter');
 const refreshFeedingEventsButton = document.getElementById('refreshFeedingEventsButton');
 const feedingEventsHistory = document.getElementById('feedingEventsHistory');
 
+// Device Management elements
+const deviceRegistrationForm = document.getElementById('deviceRegistrationForm');
+const deviceCodeInput = document.getElementById('deviceCodeInput');
+const deviceTypeInput = document.getElementById('deviceTypeInput');
+const devicePetSelect = document.getElementById('devicePetSelect');
+const deviceFirmwareVersionInput = document.getElementById('deviceFirmwareVersionInput');
+const deviceDescriptionInput = document.getElementById('deviceDescriptionInput');
+const registerDeviceButton = document.getElementById('registerDeviceButton');
+const deviceRegistrationMessage = document.getElementById('deviceRegistrationMessage');
+
+const deviceTokenPanel = document.getElementById('deviceTokenPanel');
+const deviceTokenOutput = document.getElementById('deviceTokenOutput');
+const copyDeviceTokenButton = document.getElementById('copyDeviceTokenButton');
+
+const refreshDevicesButton = document.getElementById('refreshDevicesButton');
+const devicesList = document.getElementById('devicesList');
+const deviceManagementMessage = document.getElementById('deviceManagementMessage');
+
 const refreshApprovedPetsButton = document.getElementById(
     'refreshApprovedPetsButton'
 );
@@ -172,6 +190,33 @@ function localDateString(date = new Date()) {
     return `${year}-${month}-${day}`;
 }
 
+function populateDevicePetOptions() {
+    if (!devicePetSelect) return;
+
+    const previousPetId = devicePetSelect.value;
+
+    devicePetSelect.replaceChildren();
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'No pet assigned';
+    devicePetSelect.appendChild(placeholder);
+
+    approvedPets.forEach((pet) => {
+        const option = document.createElement('option');
+
+        option.value = pet.id;
+        option.textContent =
+            `${pet.petCode || 'No Pet ID'} — ${pet.name} (${pet.species})`;
+
+        devicePetSelect.appendChild(option);
+    });
+
+    if (approvedPets.some((pet) => pet.id === previousPetId)) {
+        devicePetSelect.value = previousPetId;
+    }
+}
+
 /* Sidebar navigation */
 
 
@@ -216,6 +261,11 @@ function switchView(viewName) {
 
     if (viewName === 'feedingEvents') {
     loadFeedingEvents();
+}
+
+if (viewName === 'devices') {
+    populateDevicePetOptions();
+    loadDevices();
 }
 
 }
@@ -834,6 +884,379 @@ administeredDateInput.addEventListener('change', () => {
 
 /* Feeding event history */
 
+/* Device Management: load registered devices */
+
+async function loadDevices() {
+    if (!dashboardReady || !devicesList) return;
+
+    devicesList.replaceChildren();
+    devicesList.setAttribute('aria-busy', 'true');
+
+    if (deviceManagementMessage) {
+        deviceManagementMessage.textContent = '';
+    }
+
+    const loadingMessage = document.createElement('p');
+    loadingMessage.className = 'muted';
+    loadingMessage.textContent = 'Loading registered devices...';
+    devicesList.appendChild(loadingMessage);
+
+    if (refreshDevicesButton) {
+        refreshDevicesButton.disabled = true;
+    }
+
+    try {
+        const data = await apiRequest('/api/clinic/devices');
+        const devices = Array.isArray(data.devices) ? data.devices : [];
+
+        devicesList.replaceChildren();
+
+        if (devices.length === 0) {
+            const emptyMessage = document.createElement('p');
+            emptyMessage.className = 'muted';
+            emptyMessage.textContent = 'No registered devices found.';
+            devicesList.appendChild(emptyMessage);
+            return;
+        }
+
+        devices.forEach((device) => {
+            const card = document.createElement('article');
+            card.className = 'device-list-item';
+
+            const heading = document.createElement('div');
+            heading.className = 'device-list-heading';
+
+            const title = document.createElement('h3');
+            title.textContent = device.deviceCode || 'Unnamed device';
+
+            const status = document.createElement('span');
+            status.className = `device-status device-status-${device.status}`;
+            status.textContent = device.status || 'Unknown';
+
+            heading.append(title, status);
+            card.appendChild(heading);
+
+            function addDetail(label, value) {
+                const paragraph = document.createElement('p');
+                paragraph.className = 'device-detail';
+
+                const labelElement = document.createElement('strong');
+                labelElement.textContent = `${label}: `;
+
+                const valueElement = document.createElement('span');
+                valueElement.textContent = value || 'Not provided';
+
+                paragraph.append(labelElement, valueElement);
+                card.appendChild(paragraph);
+            }
+
+            const typeLabel = device.deviceType === 'feeder'
+                ? 'Automatic Feeder'
+                : device.deviceType === 'collar'
+                    ? 'Activity Monitoring Collar'
+                    : device.deviceType || 'Unknown';
+
+            addDetail('Device type', typeLabel);
+
+            const assignedPet = device.pet
+                ? `${device.pet.name || 'Unnamed pet'} (${device.pet.petCode || 'No pet code'})`
+                : 'Unassigned';
+
+            addDetail('Assigned pet', assignedPet);
+            addDetail('Firmware version', device.firmwareVersion);
+            addDetail('Description', device.description);
+
+            addDetail(
+                'Registered by',
+                device.registeredBy?.fullName || 'Unknown'
+            );
+
+            addDetail(
+                'Date registered',
+                device.createdAt
+                    ? new Date(device.createdAt).toLocaleString()
+                    : 'Unknown'
+            );
+
+            addDetail(
+                'Last activity',
+                device.lastSeenAt
+                    ? new Date(device.lastSeenAt).toLocaleString()
+                    : 'No activity reported'
+            );
+
+            // Device assignment controls
+            const assignmentPanel = document.createElement('div');
+            assignmentPanel.className = 'device-card-actions';
+
+            const assignmentLabel = document.createElement('label');
+            assignmentLabel.textContent = 'Assign to approved pet';
+
+            const assignmentSelect = document.createElement('select');
+            assignmentSelect.setAttribute(
+                'aria-label',
+                `Assign pet to device ${device.deviceCode}`
+            );
+
+            const unassignedOption = document.createElement('option');
+            unassignedOption.value = '';
+            unassignedOption.textContent = 'Unassigned';
+            assignmentSelect.appendChild(unassignedOption);
+
+            approvedPets.forEach((pet) => {
+                const option = document.createElement('option');
+                option.value = pet.id;
+                option.textContent =
+                    `${pet.petCode || 'No Pet ID'} — ${pet.name} (${pet.species})`;
+
+                if (device.pet && device.pet.id === pet.id) {
+                    option.selected = true;
+                }
+
+                assignmentSelect.appendChild(option);
+            });
+
+            const saveAssignmentButton = document.createElement('button');
+            saveAssignmentButton.type = 'button';
+            saveAssignmentButton.className = 'secondary';
+            saveAssignmentButton.textContent = 'Save Assignment';
+
+            const assignmentIsAllowed = device.status === 'active';
+            assignmentSelect.disabled = !assignmentIsAllowed;
+            saveAssignmentButton.disabled = !assignmentIsAllowed;
+
+            saveAssignmentButton.addEventListener('click', async () => {
+                saveAssignmentButton.disabled = true;
+
+                try {
+                    const result = await apiRequest(
+                        `/api/clinic/devices/${encodeURIComponent(device.id)}/assignment`,
+                        {
+                            method: 'PATCH',
+                            body: JSON.stringify({
+                                petId: assignmentSelect.value || null
+                            })
+                        }
+                    );
+
+                    if (deviceManagementMessage) {
+                        deviceManagementMessage.textContent =
+                            result.message || 'Device assignment updated.';
+                    }
+
+                    await loadDevices();
+                } catch (error) {
+                    if (deviceManagementMessage) {
+                        deviceManagementMessage.textContent =
+                            `Unable to update assignment: ${error.message}`;
+                    }
+
+                    saveAssignmentButton.disabled = !assignmentIsAllowed;
+                }
+            });
+
+            assignmentPanel.append(
+                assignmentLabel,
+                assignmentSelect,
+                saveAssignmentButton
+            );
+
+            card.appendChild(assignmentPanel);
+
+            // Device status controls
+            const statusPanel = document.createElement('div');
+            statusPanel.className = 'device-card-actions';
+
+            const statusLabel = document.createElement('label');
+            statusLabel.textContent = 'Device status';
+
+            const statusSelect = document.createElement('select');
+            statusSelect.setAttribute(
+                'aria-label',
+                `Change status for device ${device.deviceCode}`
+            );
+
+            const allowedStatuses = device.status === 'revoked'
+                ? ['revoked']
+                : ['active', 'disabled', 'revoked'];
+
+            allowedStatuses.forEach((value) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent =
+                    value.charAt(0).toUpperCase() + value.slice(1);
+                option.selected = value === device.status;
+                statusSelect.appendChild(option);
+            });
+
+            const updateStatusButton = document.createElement('button');
+            updateStatusButton.type = 'button';
+            updateStatusButton.className = 'secondary';
+            updateStatusButton.textContent = 'Update Status';
+
+            updateStatusButton.disabled = device.status === 'revoked';
+
+            updateStatusButton.addEventListener('click', async () => {
+                const newStatus = statusSelect.value;
+
+                if (newStatus === device.status) {
+                    if (deviceManagementMessage) {
+                        deviceManagementMessage.textContent =
+                            'The device already has that status.';
+                    }
+                    return;
+                }
+
+                if (device.status === 'revoked') {
+                    if (deviceManagementMessage) {
+                        deviceManagementMessage.textContent =
+                            'Revoked devices cannot be reactivated.';
+                    }
+                    return;
+                }
+
+                if (newStatus === 'revoked') {
+                    const confirmed = window.confirm(
+                        `Permanently revoke device ${device.deviceCode}? ` +
+                        'This action cannot be undone. A replacement must be registered.'
+                    );
+
+                    if (!confirmed) {
+                        statusSelect.value = device.status;
+                        return;
+                    }
+                }
+
+                updateStatusButton.disabled = true;
+
+                try {
+                    const result = await apiRequest(
+                        `/api/clinic/devices/${encodeURIComponent(device.id)}/status`,
+                        {
+                            method: 'PATCH',
+                            body: JSON.stringify({ status: newStatus })
+                        }
+                    );
+
+                    if (deviceManagementMessage) {
+                        deviceManagementMessage.textContent =
+                            result.message || 'Device status updated successfully.';
+                    }
+
+                    await loadDevices();
+                } catch (error) {
+                    if (deviceManagementMessage) {
+                        deviceManagementMessage.textContent =
+                            `Unable to update device status: ${error.message}`;
+                    }
+
+                    updateStatusButton.disabled = false;
+                }
+            });
+
+            statusPanel.append(
+                statusLabel,
+                statusSelect,
+                updateStatusButton
+            );
+
+            card.appendChild(statusPanel);
+
+            devicesList.appendChild(card);
+        });
+    } catch (error) {
+        devicesList.replaceChildren();
+
+        const errorMessage = document.createElement('p');
+        errorMessage.className = 'error-message';
+        errorMessage.textContent =
+            `Unable to load devices: ${error.message}`;
+
+        devicesList.appendChild(errorMessage);
+    } finally {
+        devicesList.setAttribute('aria-busy', 'false');
+
+        if (refreshDevicesButton) {
+            refreshDevicesButton.disabled = false;
+        }
+    }
+}
+
+/* Device Management: register a device */
+
+async function handleDeviceRegistration(event) {
+    event.preventDefault();
+
+    if (!dashboardReady) {
+        deviceRegistrationMessage.textContent =
+            'Your session is not ready. Please try again.';
+        return;
+    }
+
+    // Protect a previously generated token from accidental replacement.
+    if (!deviceTokenPanel.hidden) {
+        const saved = window.confirm(
+            'A previously generated device token is still displayed. ' +
+            'Make sure you have saved it securely before registering another device. Continue?'
+        );
+
+        if (!saved) return;
+    }
+
+    registerDeviceButton.disabled = true;
+    registerDeviceButton.textContent = 'Registering...';
+    deviceRegistrationMessage.textContent = '';
+    deviceTokenPanel.hidden = true;
+    deviceTokenOutput.textContent = '';
+
+    const payload = {
+        deviceCode: deviceCodeInput.value.trim(),
+        deviceType: deviceTypeInput.value,
+        firmwareVersion: deviceFirmwareVersionInput.value.trim(),
+        description: deviceDescriptionInput.value.trim()
+    };
+
+    if (devicePetSelect.value) {
+        payload.petId = devicePetSelect.value;
+    }
+
+    try {
+        const data = await apiRequest('/api/clinic/devices', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+
+        if (!data.deviceToken) {
+            throw new Error(
+                'The device was registered, but no token was returned. ' +
+                'Refresh the device list and verify the registration.'
+            );
+        }
+
+        deviceTokenOutput.textContent = data.deviceToken;
+        deviceTokenPanel.hidden = false;
+
+        deviceRegistrationMessage.textContent =
+            'Device registered successfully. Save its token securely now.';
+
+        deviceRegistrationForm.reset();
+        populateDevicePetOptions();
+
+        await loadDevices();
+
+        deviceTokenPanel.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    } catch (error) {
+        deviceRegistrationMessage.textContent =
+            `Unable to register device: ${error.message}`;
+    } finally {
+        registerDeviceButton.disabled = false;
+        registerDeviceButton.textContent = 'Register Device';
+    }
+}
+
 async function loadFeedingEvents() {
     if (!dashboardReady || !feedingEventsHistory) return;
 
@@ -1063,6 +1486,41 @@ if (feedingStatusFilter) {
 if (refreshFeedingEventsButton) {
     refreshFeedingEventsButton.addEventListener('click', loadFeedingEvents);
 }
+
+if (refreshDevicesButton) {
+    refreshDevicesButton.addEventListener('click', loadDevices);
+}
+
+// Device registration form
+if (deviceRegistrationForm) {
+    deviceRegistrationForm.addEventListener(
+        'submit',
+        handleDeviceRegistration
+    );
+}
+
+// Copy the generated device token securely
+if (copyDeviceTokenButton) {
+    copyDeviceTokenButton.addEventListener('click', async () => {
+        const token = deviceTokenOutput.textContent.trim();
+
+        if (!token) {
+            deviceManagementMessage.textContent =
+                'No device token is available to copy.';
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(token);
+            deviceManagementMessage.textContent =
+                'Device token copied. Store it securely.';
+        } catch (error) {
+            deviceManagementMessage.textContent =
+                'Automatic copying failed. Select and copy the displayed token manually.';
+        }
+    });
+}
+
 
 switchView('overview');
 verifyVeterinarySession();
