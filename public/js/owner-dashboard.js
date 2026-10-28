@@ -1158,5 +1158,214 @@ if (applyOwnerFeedingFiltersButton) {
 });
 })();
 
+/* ==========================================
+   MY ACCOUNT — PERSONAL PROFILE & SINGLE SUBMISSION
+   ========================================== */
+
+const accountProfileForm = document.getElementById('accountProfileForm');
+const accountFullName = document.getElementById('accountFullName');
+const accountEmail = document.getElementById('accountEmail');
+const accountPhone = document.getElementById('accountPhone');
+const accountAddress = document.getElementById('accountAddress');
+const accountProfileMessage = document.getElementById('accountProfileMessage');
+const saveAccountProfileButton = document.getElementById('saveAccountProfileButton');
+
+const accountPhotoInput = document.getElementById('accountPhotoInput');
+const accountProfilePhoto = document.getElementById('accountProfilePhoto');
+const accountProfileInitials = document.getElementById('accountProfileInitials');
+const accountPhotoFileName = document.getElementById('accountPhotoFileName');
+const accountPhotoPreviewContainer = document.getElementById('accountPhotoPreviewContainer');
+const accountPhotoPreview = document.getElementById('accountPhotoPreview');
+
+let accountPhotoObjectUrl = null;
+
+function updateAccountInitials(fullName) {
+    if (!accountProfileInitials) return;
+
+    const initials = String(fullName || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('');
+
+    accountProfileInitials.textContent = initials || '👤';
+}
+
+// Live Photo Selection & Preview Handler
+if (accountPhotoInput && accountPhotoPreviewContainer && accountPhotoPreview) {
+    accountPhotoInput.addEventListener('change', () => {
+        const file = accountPhotoInput.files?.[0];
+        if (accountPhotoObjectUrl) {
+            URL.revokeObjectURL(accountPhotoObjectUrl);
+            accountPhotoObjectUrl = null;
+        }
+
+        if (!file) {
+            accountPhotoPreviewContainer.hidden = true;
+            if (accountPhotoFileName) accountPhotoFileName.textContent = 'No file chosen';
+            return;
+        }
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            accountPhotoInput.value = '';
+            showMessage(accountProfileMessage, 'Choose a JPG, PNG, or WebP image.', 'error');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            accountPhotoInput.value = '';
+            showMessage(accountProfileMessage, 'The profile photo must not exceed 5 MB.', 'error');
+            return;
+        }
+
+        accountPhotoObjectUrl = URL.createObjectURL(file);
+        accountPhotoPreview.src = accountPhotoObjectUrl;
+        accountPhotoPreviewContainer.hidden = false;
+        if (accountPhotoFileName) {
+            accountPhotoFileName.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        }
+        showMessage(accountProfileMessage, '');
+    });
+}
+
+async function loadAccountPhoto() {
+    if (!accountProfilePhoto || !accountProfileInitials) return;
+
+    try {
+        const response = await fetch('/api/owner/profile/photo', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'image/*'
+            },
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            accountProfilePhoto.hidden = true;
+            accountProfileInitials.hidden = false;
+            return;
+        }
+
+        const imageBlob = await response.blob();
+        const newObjectUrl = URL.createObjectURL(imageBlob);
+
+        const image = new Image();
+        image.onload = () => {
+            accountProfilePhoto.src = newObjectUrl;
+            accountProfilePhoto.hidden = false;
+            accountProfileInitials.hidden = true;
+        };
+        image.src = newObjectUrl;
+    } catch {
+        accountProfilePhoto.hidden = true;
+        accountProfileInitials.hidden = false;
+    }
+}
+
+async function loadOwnerProfile() {
+    if (!accountProfileForm) return;
+
+    showMessage(accountProfileMessage, 'Loading your personal information...');
+
+    if (saveAccountProfileButton) {
+        saveAccountProfileButton.disabled = true;
+    }
+
+    try {
+        const data = await apiRequest('/api/owner/profile');
+        const user = data.user;
+
+        accountFullName.value = user.fullName || '';
+        accountEmail.value = user.email || '';
+        accountPhone.value = user.phone || '';
+        accountAddress.value = user.address || '';
+
+        updateAccountInitials(user.fullName);
+        showMessage(accountProfileMessage, '');
+
+        if (user.hasProfilePhoto) {
+            await loadAccountPhoto();
+        } else {
+            if (accountProfilePhoto) {
+                accountProfilePhoto.hidden = true;
+                accountProfilePhoto.removeAttribute('src');
+            }
+            if (accountProfileInitials) {
+                accountProfileInitials.hidden = false;
+            }
+        }
+    } catch (error) {
+        showMessage(accountProfileMessage, error.message || 'Unable to load your account.', 'error');
+    } finally {
+        if (saveAccountProfileButton) {
+            saveAccountProfileButton.disabled = false;
+        }
+    }
+}
+
+const accountNavigationButton = document.querySelector('.nav-item[data-view="account"]');
+if (accountNavigationButton) {
+    accountNavigationButton.addEventListener('click', loadOwnerProfile);
+}
+
+// Unified Submit: Save text details and upload photo together via Save Changes button
+if (accountProfileForm) {
+    accountProfileForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        showMessage(accountProfileMessage, '');
+
+        saveAccountProfileButton.disabled = true;
+        saveAccountProfileButton.textContent = 'Saving changes...';
+
+        try {
+            const formData = new FormData();
+            formData.append('fullName', accountFullName.value.trim());
+            formData.append('email', accountEmail.value.trim());
+            formData.append('phone', accountPhone.value.trim());
+            formData.append('address', accountAddress.value.trim());
+
+            const file = accountPhotoInput?.files?.[0];
+            if (file) {
+                formData.append('profilePhoto', file);
+            }
+
+            // 1. Save profile text details (PATCH)
+            const profileData = await apiRequest('/api/owner/profile', {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    fullName: accountFullName.value.trim(),
+                    email: accountEmail.value.trim(),
+                    phone: accountPhone.value.trim(),
+                    address: accountAddress.value.trim()
+                })
+            });
+
+            // 2. Upload photo if selected (POST)
+            if (file) {
+                const photoFormData = new FormData();
+                photoFormData.append('profilePhoto', file);
+                await apiRequest('/api/owner/profile/photo', {
+                    method: 'POST',
+                    body: photoFormData
+                });
+                await loadAccountPhoto();
+                accountPhotoInput.value = '';
+                if (accountPhotoPreviewContainer) accountPhotoPreviewContainer.hidden = true;
+                if (accountPhotoFileName) accountPhotoFileName.textContent = 'No file chosen';
+            }
+
+            updateAccountInitials(profileData.user.fullName);
+            showMessage(accountProfileMessage, 'Account changes saved successfully!', 'success');
+        } catch (error) {
+            showMessage(accountProfileMessage, error.message || 'Unable to save your account changes.', 'error');
+        } finally {
+            saveAccountProfileButton.disabled = false;
+            saveAccountProfileButton.textContent = 'Save Changes';
+        }
+    });
+}
 
 verifyOwner();

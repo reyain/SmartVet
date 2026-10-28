@@ -8,6 +8,7 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 
+const User = require('../models/User');
 
 const Pet = require('../models/Pet');
 const VaccinationRecord = require('../models/VaccinationRecord');
@@ -71,6 +72,58 @@ const petPhotoUpload = multer({
     }
 });
 
+
+const profilePhotoDirectory = path.join(
+    __dirname,
+    '../../uploads/profile-photos'
+);
+
+fs.mkdirSync(profilePhotoDirectory, { recursive: true });
+
+const allowedProfilePhotoTypes = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp'
+};
+
+const profilePhotoStorage = multer.diskStorage({
+    destination: (_req, _file, callback) => {
+        callback(null, profilePhotoDirectory);
+    },
+    filename: (_req, file, callback) => {
+        const extension = allowedProfilePhotoTypes[file.mimetype];
+
+        callback(
+            null,
+            `${crypto.randomBytes(16).toString('hex')}${extension}`
+        );
+    }
+});
+
+const profilePhotoUpload = multer({
+    storage: profilePhotoStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+        files: 1
+    },
+    fileFilter: (_req, file, callback) => {
+        if (!Object.prototype.hasOwnProperty.call(
+            allowedProfilePhotoTypes,
+            file.mimetype
+        )) {
+            const error = new Error(
+                'Profile photo must be a JPG, PNG, or WebP image.'
+            );
+
+            error.code = 'INVALID_PROFILE_PHOTO_TYPE';
+            return callback(error);
+        }
+
+        callback(null, true);
+    }
+});
+
+
 function handlePetPhotoUpload(req, res, next) {
     petPhotoUpload.single('petPhoto')(req, res, (error) => {
         if (!error) {
@@ -100,8 +153,290 @@ function handlePetPhotoUpload(req, res, next) {
     });
 }
 
+
+function handleProfilePhotoUpload(req, res, next) {
+    profilePhotoUpload.single('profilePhoto')(req, res, (error) => {
+        if (!error) {
+            return next();
+        }
+
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({
+                success: false,
+                message: 'Profile photo must not exceed 5 MB.'
+            });
+        }
+
+        if (
+            error.code === 'LIMIT_UNEXPECTED_FILE' ||
+            error.code === 'INVALID_PROFILE_PHOTO_TYPE'
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: error.code === 'INVALID_PROFILE_PHOTO_TYPE'
+                    ? error.message
+                    : 'Only one profile photo may be uploaded.'
+            });
+        }
+
+        return next(error);
+    });
+}
+
+
 // All endpoints in this router require an authenticated pet owner.
 router.use(requireAuth, authorizeRoles('owner'));
+
+
+/* GET /api/owner/profile/photo
+   Retrieve the logged-in owner's own profile photo. */
+router.get('/profile/photo', async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id)
+            .select('role profilePhotoFilename profilePhotoContentType')
+            .lean();
+
+        if (!user || user.role !== 'owner') {
+            return res.status(404).json({
+                success: false,
+                message: 'Owner account not found.'
+            });
+        }
+
+        const filename = user.profilePhotoFilename;
+
+        if (
+            !filename ||
+            !user.profilePhotoContentType ||
+            !/^[a-f0-9]{32}\.(jpg|png|webp)$/i.test(filename)
+        ) {
+            return res.status(404).json({
+                success: false,
+                message: 'No profile photo is available.'
+            });
+        }
+
+        const photoPath = path.join(profilePhotoDirectory, filename);
+
+        res.set('Content-Type', user.profilePhotoContentType);
+        res.set('Cache-Control', 'private, no-store');
+        res.set('X-Content-Type-Options', 'nosniff');
+
+        return res.sendFile(photoPath, (error) => {
+            if (error && !res.headersSent) {
+                return next(error);
+            }
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+/* POST /api/owner/profile/photo
+   Upload or replace the logged-in owner's own profile photo. */
+router.post(
+    '/profile/photo',
+    handleProfilePhotoUpload,
+    async (req, res, next) => {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please select a profile photo.'
+            });
+        }
+
+        try {
+            const user = await User.findById(req.user.id);
+
+            if (!user || user.role !== 'owner') {
+                fs.unlink(req.file.path, () => {});
+
+                return res.status(404).json({
+                    success: false,
+                    message: 'Owner account not found.'
+                });
+            }
+
+            const previousFilename = user.profilePhotoFilename;
+
+            user.profilePhotoFilename = req.file.filename;
+            user.profilePhotoContentType = req.file.mimetype;
+            user.profilePhotoOriginalName = path.basename(
+                req.file.originalname
+            ).slice(0, 255);
+            user.profilePhotoSize = req.file.size;
+
+            try {
+                await user.save();
+            } catch (saveError) {
+                fs.unlink(req.file.path, () => {});
+                throw saveError;
+            }
+
+            // Remove the previous image only after the new one is saved.
+            if (
+                previousFilename &&
+                /^[a-f0-9]{32}\.(jpg|png|webp)$/i.test(previousFilename)
+            ) {
+                const previousPath = path.join(
+                    profilePhotoDirectory,
+                    previousFilename
+                );
+
+                fs.unlink(previousPath, () => {});
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Profile photo uploaded successfully.',
+                photoUrl: '/api/owner/profile/photo'
+            });
+        } catch (error) {
+            return next(error);
+        }
+    }
+);
+
+
+// GET /api/owner/profile
+// Retrieve the authenticated owner's personal information.
+router.get('/profile', async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id)
+            .select(
+                'fullName email phone address role ' +
+                'profilePhotoFilename profilePhotoContentType'
+            )
+            .lean();
+
+        if (!user || user.role !== 'owner') {
+            return res.status(404).json({
+                success: false,
+                message: 'Owner account not found.'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            user: {
+                id: String(user._id),
+                fullName: user.fullName,
+                email: user.email,
+                phone: user.phone || '',
+                address: user.address || '',
+                hasProfilePhoto: Boolean(
+                    user.profilePhotoFilename &&
+                    user.profilePhotoContentType
+                )
+            }
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+// PATCH /api/owner/profile
+// Update only the authenticated owner's personal information.
+router.patch(
+    '/profile',
+    [
+        body('fullName')
+            .isString()
+            .withMessage('Please enter a valid full name.')
+            .bail()
+            .trim()
+            .isLength({ min: 2, max: 120 })
+            .withMessage('Full name must be 2 to 120 characters.'),
+
+        body('email')
+            .isString()
+            .withMessage('Please enter a valid email address.')
+            .bail()
+            .trim()
+            .isEmail()
+            .withMessage('Please enter a valid email address.')
+            .bail()
+            .isLength({ max: 254 })
+            .withMessage('Email address is too long.'),
+
+        body('phone')
+            .optional({ checkFalsy: true })
+            .isString()
+            .withMessage('Please enter a valid phone number.')
+            .bail()
+            .trim()
+            .isLength({ max: 30 })
+            .withMessage('Phone number must not exceed 30 characters.'),
+
+        body('address')
+            .optional({ checkFalsy: true })
+            .isString()
+            .withMessage('Please enter a valid address.')
+            .bail()
+            .trim()
+            .isLength({ max: 250 })
+            .withMessage('Address must not exceed 250 characters.')
+    ],
+    async (req, res, next) => {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: errors.array()[0].msg
+            });
+        }
+
+        try {
+            const user = await User.findById(req.user.id);
+
+            if (!user || user.role !== 'owner') {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Owner account not found.'
+                });
+            }
+
+            user.fullName = req.body.fullName.trim();
+            user.email = req.body.email.trim().toLowerCase();
+
+            if (typeof req.body.phone === 'string') {
+                user.phone = req.body.phone.trim();
+            }
+
+            if (typeof req.body.address === 'string') {
+                user.address = req.body.address.trim();
+            }
+
+            await user.save();
+
+            return res.status(200).json({
+                success: true,
+                message: 'Personal information updated successfully.',
+                user: {
+                    id: user._id.toString(),
+                    fullName: user.fullName,
+                    email: user.email,
+                    phone: user.phone || '',
+                    address: user.address || '',
+                    hasProfilePhoto: Boolean(
+                        user.profilePhotoFilename &&
+                        user.profilePhotoContentType
+                    )
+                }
+            });
+        } catch (error) {
+            if (error && error.code === 11000) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'That email address is already in use.'
+                });
+            }
+
+            return next(error);
+        }
+    }
+);
 
 // Allow an owner to view a photo belonging to their own pet.
 router.get('/pets/:petId/photo', async (req, res, next) => {

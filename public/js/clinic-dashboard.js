@@ -67,6 +67,44 @@ const qrPetColor = document.getElementById('qrPetColor');
 const qrPetOwnerName = document.getElementById('qrPetOwnerName');
 const qrPetStatusBadge = document.getElementById('qrPetStatusBadge');
 
+// QR Owner Details modal
+const qrOwnerDetailsButton = document.getElementById('qrOwnerDetailsButton');
+const qrOwnerDetailsDialog = document.getElementById('qrOwnerDetailsDialog');
+
+// QR Vaccination Record modal
+const qrAddVaccinationButton = document.getElementById(
+    'qrAddVaccinationButton'
+);
+const qrVaccinationRecordDialog = document.getElementById(
+    'qrVaccinationRecordDialog'
+);
+const qrVaccinationForm = document.getElementById('qrVaccinationForm');
+const qrVaccinationPetName = document.getElementById('qrVaccinationPetName');
+const qrVaccinationMessage = document.getElementById('qrVaccinationMessage');
+const qrSaveVaccinationButton = document.getElementById(
+    'qrSaveVaccinationButton'
+);
+
+// QR Vaccination History modal
+const qrVaccinationHistoryButton = document.getElementById(
+    'qrVaccinationHistoryButton'
+);
+const qrVaccinationHistoryDialog = document.getElementById(
+    'qrVaccinationHistoryDialog'
+);
+const qrHistoryPetName = document.getElementById('qrHistoryPetName');
+const qrVaccinationHistoryList = document.getElementById(
+    'qrVaccinationHistoryList'
+);
+
+const qrOwnerName = document.getElementById('qrOwnerName');
+const qrOwnerEmail = document.getElementById('qrOwnerEmail');
+const qrOwnerPhone = document.getElementById('qrOwnerPhone');
+const qrOwnerPhoto = document.getElementById('qrOwnerPhoto');
+const qrOwnerPhotoPlaceholder = document.getElementById('qrOwnerPhotoPlaceholder');
+
+
+
 let qrCameraStream = null;
 let qrAnimationFrameId = null;
 let qrScanBusy = false;
@@ -1722,6 +1760,354 @@ function displayScannedPet(pet) {
         qrPetPhotoPlaceholder.hidden = false;
     }
 }
+
+// Display the personal information of the scanned pet's owner.
+function openQrOwnerDetails() {
+    if (!currentQrPet || !qrOwnerDetailsDialog) {
+        return;
+    }
+
+    const owner = currentQrPet.owner;
+
+    if (!owner) {
+        if (qrScannerStatus) {
+            showMessage(
+                qrScannerStatus,
+                'Owner information is unavailable for this pet.',
+                'error'
+            );
+        }
+        return;
+    }
+
+    if (qrOwnerName) {
+        qrOwnerName.textContent = owner.fullName || 'Name unavailable';
+    }
+
+    if (qrOwnerEmail) {
+        qrOwnerEmail.textContent = `Email: ${owner.email || 'Not provided'}`;
+    }
+
+    if (qrOwnerPhone) {
+        qrOwnerPhone.textContent = `Phone: ${owner.phone || 'Not provided'}`;
+    }
+
+    // User.js currently has no owner-photo field.
+    if (qrOwnerPhoto) {
+        qrOwnerPhoto.removeAttribute('src');
+        qrOwnerPhoto.hidden = true;
+    }
+
+    if (qrOwnerPhotoPlaceholder) {
+        qrOwnerPhotoPlaceholder.hidden = false;
+        qrOwnerPhotoPlaceholder.textContent =
+            'Owner photo is not registered in SmartVet.';
+    }
+
+    if (!qrOwnerDetailsDialog.open) {
+        qrOwnerDetailsDialog.showModal();
+    }
+}
+
+// Open the vaccination form for the pet identified by QR.
+if (qrAddVaccinationButton) {
+    qrAddVaccinationButton.addEventListener('click', () => {
+        if (!currentQrPet || !currentQrPet.id) {
+            showMessage(
+                qrScannerStatus,
+                'Scan an approved pet before recording a vaccination.',
+                'error'
+            );
+            return;
+        }
+
+        if (qrVaccinationPetName) {
+            qrVaccinationPetName.textContent =
+                `Selected pet: ${currentQrPet.name || 'Unnamed pet'} (${currentQrPet.petCode || 'No Pet ID'})`;
+        }
+
+        if (qrVaccinationForm) {
+            qrVaccinationForm.reset();
+        }
+
+        if (qrVaccinationMessage) {
+            showMessage(qrVaccinationMessage, '');
+        }
+
+        const today = localDateString();
+        const administeredInput = document.getElementById('qrAdministeredDate');
+        const dueDateInput = document.getElementById('qrNextDueDate');
+
+        if (administeredInput) {
+            administeredInput.max = today;
+        }
+
+        if (dueDateInput) {
+            dueDateInput.min = '';
+        }
+
+        if (
+            qrVaccinationRecordDialog &&
+            !qrVaccinationRecordDialog.open
+        ) {
+            qrVaccinationRecordDialog.showModal();
+        }
+    });
+}
+
+
+// Save vaccination records for the pet identified by QR.
+if (qrVaccinationForm) {
+    qrVaccinationForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        if (!currentQrPet || !currentQrPet.id) {
+            showMessage(
+                qrVaccinationMessage,
+                'Please scan an approved pet first.',
+                'error'
+            );
+            return;
+        }
+
+        const vaccineName =
+            document.getElementById('qrVaccineName').value.trim();
+
+        const administeredDate =
+            document.getElementById('qrAdministeredDate').value;
+
+        const nextDueDate =
+            document.getElementById('qrNextDueDate').value;
+
+        const today = localDateString();
+
+        if (!vaccineName || !administeredDate) {
+            showMessage(
+                qrVaccinationMessage,
+                'Vaccine name and administration date are required.',
+                'error'
+            );
+            return;
+        }
+
+        if (administeredDate > today) {
+            showMessage(
+                qrVaccinationMessage,
+                'Administration date cannot be in the future.',
+                'error'
+            );
+            return;
+        }
+
+        if (nextDueDate && nextDueDate < administeredDate) {
+            showMessage(
+                qrVaccinationMessage,
+                'Next due date cannot be earlier than the administration date.',
+                'error'
+            );
+            return;
+        }
+
+        const payload = {
+            vaccineName,
+            administeredDate,
+            batchNumber:
+                document.getElementById('qrBatchNumber').value.trim(),
+            manufacturer:
+                document.getElementById('qrManufacturer').value.trim(),
+            dosage:
+                document.getElementById('qrDosage').value.trim(),
+            notes:
+                document.getElementById('qrVaccinationNotes').value.trim()
+        };
+
+        if (nextDueDate) {
+            payload.nextDueDate = nextDueDate;
+        }
+
+        qrSaveVaccinationButton.disabled = true;
+        qrSaveVaccinationButton.textContent = 'Saving...';
+
+        try {
+            const data = await apiRequest(
+                `/api/clinic/pets/${encodeURIComponent(currentQrPet.id)}/vaccinations`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            showMessage(
+                qrVaccinationMessage,
+                data.message || 'Vaccination record saved successfully.',
+                'success'
+            );
+
+            qrVaccinationForm.reset();
+
+            const administeredInput =
+                document.getElementById('qrAdministeredDate');
+
+            if (administeredInput) {
+                administeredInput.max = localDateString();
+            }
+        } catch (error) {
+            showMessage(
+                qrVaccinationMessage,
+                error.message || 'Unable to save the vaccination record.',
+                'error'
+            );
+        } finally {
+            qrSaveVaccinationButton.disabled = false;
+            qrSaveVaccinationButton.textContent = 'Save Vaccination';
+        }
+    });
+}
+
+// Load vaccination history for the currently scanned pet.
+async function loadQrVaccinationHistory() {
+    if (!currentQrPet || !currentQrPet.id || !qrVaccinationHistoryList) {
+        return;
+    }
+
+    qrHistoryPetName.textContent =
+        `Selected pet: ${currentQrPet.name || 'Unnamed pet'} (${currentQrPet.petCode || 'No Pet ID'})`;
+
+    qrVaccinationHistoryList.setAttribute('aria-busy', 'true');
+    qrVaccinationHistoryList.replaceChildren();
+
+    const loadingMessage = document.createElement('p');
+    loadingMessage.className = 'muted';
+    loadingMessage.textContent = 'Loading vaccination history...';
+    qrVaccinationHistoryList.appendChild(loadingMessage);
+
+    try {
+        const data = await apiRequest(
+            `/api/clinic/pets/${encodeURIComponent(currentQrPet.id)}/vaccinations`
+        );
+
+        const records = Array.isArray(data.vaccinations)
+            ? data.vaccinations
+            : [];
+
+        qrVaccinationHistoryList.replaceChildren();
+
+        if (records.length === 0) {
+            const emptyMessage = document.createElement('p');
+            emptyMessage.className = 'muted';
+            emptyMessage.textContent =
+                'No vaccination records have been entered for this pet yet.';
+            qrVaccinationHistoryList.appendChild(emptyMessage);
+            return;
+        }
+
+        records.forEach((record) => {
+            const card = document.createElement('article');
+            card.className = 'qr-vaccination-history-card';
+
+            const heading = document.createElement('h3');
+            heading.textContent = record.vaccineName || 'Unnamed vaccine';
+
+            const administered = document.createElement('p');
+            administered.textContent =
+                `Administration date: ${record.administeredDate
+                    ? String(record.administeredDate).slice(0, 10)
+                    : 'Not recorded'}`;
+
+            const dueDate = document.createElement('p');
+            dueDate.textContent =
+                `Next due date: ${record.nextDueDate
+                    ? String(record.nextDueDate).slice(0, 10)
+                    : 'Not specified'}`;
+
+            card.append(heading, administered, dueDate);
+
+            if (record.batchNumber) {
+                const batch = document.createElement('p');
+                batch.textContent = `Batch number: ${record.batchNumber}`;
+                card.appendChild(batch);
+            }
+
+            if (record.manufacturer) {
+                const manufacturer = document.createElement('p');
+                manufacturer.textContent = `Manufacturer: ${record.manufacturer}`;
+                card.appendChild(manufacturer);
+            }
+
+            if (record.dosage) {
+                const dosage = document.createElement('p');
+                dosage.textContent = `Dosage: ${record.dosage}`;
+                card.appendChild(dosage);
+            }
+
+            if (record.administeredBy?.fullName) {
+                const staff = document.createElement('p');
+                staff.className = 'muted';
+                staff.textContent =
+                    `Recorded by: ${record.administeredBy.fullName}`;
+                card.appendChild(staff);
+            }
+
+            if (record.notes) {
+                const notes = document.createElement('p');
+                notes.textContent = `Notes: ${record.notes}`;
+                card.appendChild(notes);
+            }
+
+            qrVaccinationHistoryList.appendChild(card);
+        });
+    } catch (error) {
+        qrVaccinationHistoryList.replaceChildren();
+
+        const errorMessage = document.createElement('p');
+        errorMessage.className = 'message error';
+        errorMessage.textContent =
+            error.message || 'Unable to load vaccination history.';
+
+        qrVaccinationHistoryList.appendChild(errorMessage);
+    } finally {
+        qrVaccinationHistoryList.setAttribute('aria-busy', 'false');
+    }
+}
+
+// Open the vaccination history modal for the scanned pet.
+if (qrVaccinationHistoryButton) {
+    qrVaccinationHistoryButton.addEventListener('click', async () => {
+        if (!currentQrPet || !currentQrPet.id) {
+            showMessage(
+                qrScannerStatus,
+                'Scan an approved pet before viewing vaccination history.',
+                'error'
+            );
+            return;
+        }
+
+        if (qrVaccinationHistoryDialog && !qrVaccinationHistoryDialog.open) {
+            qrVaccinationHistoryDialog.showModal();
+        }
+
+        await loadQrVaccinationHistory();
+    });
+}
+
+if (qrOwnerDetailsButton) {
+    qrOwnerDetailsButton.addEventListener(
+        'click',
+        openQrOwnerDetails
+    );
+}
+
+document.querySelectorAll('[data-close-dialog]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const dialogId = button.dataset.closeDialog;
+        const dialog = document.getElementById(dialogId);
+
+        if (dialog && dialog.open) {
+            dialog.close();
+        }
+    });
+});
+
 
 // Load the pet photograph through the protected clinic photo endpoint.
 async function loadScannedPetPhoto(petId) {

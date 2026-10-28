@@ -100,6 +100,14 @@
                     <span>Notifications</span>
                     <span class="nav-count" id="sidebarUnreadCount">—</span>
                 </button>
+                
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-view="account">
+                    <span class="nav-icon" aria-hidden="true">👤</span>
+                    <span>My Account</span>
+                </button>
             </nav>
 
             
@@ -477,6 +485,132 @@
                     <div class="empty-state">Loading your notifications...</div>
                 </div>
             </section>
+
+            
+            <!-- MY ACCOUNT VIEW -->
+                <section
+                    class="owner-view"
+                    id="accountSection"
+                    data-page="account"
+                    hidden>
+
+                    <div class="page-heading">
+                        <div>
+                            <p class="page-eyebrow">USER SETTINGS</p>
+                            <h1>My Account</h1>
+                            <p class="muted">Manage your personal information and profile photo.</p>
+                        </div>
+                    </div>
+
+                    <section class="workspace-panel">
+                        <div class="section-heading">
+                            <div>
+                                <h2>Personal Information</h2>
+                                <p class="muted">
+                                    Keep your contact details up to date so the
+                                    veterinary clinic can identify you correctly.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Single unified form containing both photo and fields -->
+                        <form id="accountProfileForm" class="account-profile-grid">
+                            
+                            <!-- Profile Photo Column -->
+                            <div class="account-photo-card">
+                                <div class="account-avatar">
+                                    <img
+                                        id="accountProfilePhoto"
+                                        alt="Your profile photo"
+                                        hidden>
+                                    <span id="accountProfileInitials">👤</span>
+                                </div>
+
+                                <div class="account-photo-controls">
+                                    <label for="accountPhotoInput" class="secondary-button photo-file-label">
+                                        Choose photo
+                                    </label>
+                                    <input
+                                        id="accountPhotoInput"
+                                        name="profilePhoto"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        hidden>
+                                    
+                                    <span id="accountPhotoFileName" class="form-help">No file chosen</span>
+                                    
+                                    <!-- Live Preview Box -->
+                                    <div id="accountPhotoPreviewContainer" class="account-photo-preview-box" hidden>
+                                        <img id="accountPhotoPreview" alt="Selected photo preview">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Profile Fields Column -->
+                            <div class="account-form-side">
+                                <div class="form-field">
+                                    <label for="accountFullName">Full name</label>
+                                    <input
+                                        id="accountFullName"
+                                        name="fullName"
+                                        type="text"
+                                        minlength="2"
+                                        maxlength="120"
+                                        autocomplete="name"
+                                        required>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="accountEmail">Email address</label>
+                                    <input
+                                        id="accountEmail"
+                                        name="email"
+                                        type="email"
+                                        maxlength="254"
+                                        autocomplete="email"
+                                        required>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="accountPhone">Phone number</label>
+                                    <input
+                                        id="accountPhone"
+                                        name="phone"
+                                        type="tel"
+                                        maxlength="30"
+                                        autocomplete="tel">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="accountAddress">Address</label>
+                                    <textarea
+                                        id="accountAddress"
+                                        name="address"
+                                        rows="3"
+                                        maxlength="250"
+                                        autocomplete="street-address"
+                                        placeholder="Enter your home or contact address"></textarea>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button
+                                        type="submit"
+                                        class="primary-button"
+                                        id="saveAccountProfileButton">
+                                        Save Changes
+                                    </button>
+                                </div>
+
+                                <p
+                                    id="accountProfileMessage"
+                                    class="message"
+                                    role="status"
+                                    aria-live="polite"></p>
+                            </div>
+                        </form>
+                    </section>
+                </section>
+
 
         </main>
     </div>

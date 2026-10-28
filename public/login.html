@@ -3,59 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | VetCare</title>
+    <title>Login | SmartVet</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/login.css">
     <script src="/js/login.js" defer></script>
 </head>
 <body class="login-body">
-
     <main class="login-wrapper">
         <div class="login-card">
-            
-            <!-- Left Column: Form Section -->
+
             <section class="login-form-side">
                 <div class="brand-pill">
-                    <span class="brand-pill-text">VetCare</span>
+                    <span class="brand-pill-text">SmartVet</span>
                 </div>
 
-                <div class="form-header">
-                    <h1>Sign in</h1>
-                    <p>Welcome back! Please enter your details.</p>
+                <!-- Existing login view -->
+                <div id="loginView">
+                    <div class="form-header">
+                        <h1>Sign in</h1>
+                        <p>Welcome back! Please enter your details.</p>
+                    </div>
+
+                    <form id="loginForm">
+                        <div class="form-field">
+                            <label for="email">Email</label>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                placeholder="Enter your email"
+                                autocomplete="username"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-field">
+                            <label for="password">Password</label>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+                        </div>
+
+                        <button
+                            class="primary-button submit-btn"
+                            id="loginButton"
+                            type="submit"
+                        >
+                            Sign in
+                        </button>
+
+                        <p
+                            id="loginMessage"
+                            class="form-message"
+                            role="status"
+                            aria-live="polite"
+                        ></p>
+                    </form>
+
+                    <div class="form-footer">
+                        <p>New pet owner?
+                            <button
+                                class="text-button"
+                                id="showRegisterButton"
+                                type="button"
+                            >Create an owner account</button>
+                        </p>
+                        <p>Back to <a class="back-link" href="/">SmartVet Home</a></p>
+                    </div>
                 </div>
 
-                <form id="loginForm">
-                    <div class="form-field">
-                        <label for="email">Email</label>
-                        <input id="email" name="email" type="email" placeholder="Enter your email" autocomplete="username" required>
+                <!-- New owner registration view -->
+                <div id="registerView" hidden>
+                    <div class="form-header">
+                        <h1>Create account</h1>
+                        <p>Register your owner account to manage your pets.</p>
                     </div>
 
-                    <div class="form-field">
-                        <label for="password">Password</label>
-                        <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required>
+                    <form id="registerForm">
+                        <div class="form-field">
+                            <label for="registerFullName">Full name</label>
+                            <input
+                                id="registerFullName"
+                                name="fullName"
+                                type="text"
+                                placeholder="Enter your full name"
+                                autocomplete="name"
+                                minlength="2"
+                                maxlength="120"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-field">
+                            <label for="registerEmail">Email</label>
+                            <input
+                                id="registerEmail"
+                                name="email"
+                                type="email"
+                                placeholder="Enter your email"
+                                autocomplete="email"
+                                maxlength="254"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-field">
+                            <label for="registerPhone">Phone number</label>
+                            <input
+                                id="registerPhone"
+                                name="phone"
+                                type="tel"
+                                placeholder="Enter your phone number"
+                                autocomplete="tel"
+                                maxlength="30"
+                            >
+                        </div>
+
+                        <div class="form-field">
+                            <label for="registerPassword">Password</label>
+                            <input
+                                id="registerPassword"
+                                name="password"
+                                type="password"
+                                placeholder="At least 8 characters"
+                                autocomplete="new-password"
+                                minlength="8"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-field">
+                            <label for="confirmPassword">Confirm password</label>
+                            <input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type="password"
+                                placeholder="Re-enter your password"
+                                autocomplete="new-password"
+                                minlength="8"
+                                required
+                            >
+                        </div>
+
+                        <button
+                            class="primary-button submit-btn"
+                            id="registerButton"
+                            type="submit"
+                        >
+                            Create owner account
+                        </button>
+
+                        <p
+                            id="registerMessage"
+                            class="form-message"
+                            role="status"
+                            aria-live="polite"
+                        ></p>
+                    </form>
+
+                    <div class="form-footer">
+                        <p>Already registered?
+                            <button
+                                class="text-button"
+                                id="showLoginButton"
+                                type="button"
+                            >Sign in</button>
+                        </p>
+                        <p>Back to <a class="back-link" href="/">SmartVet Home</a></p>
                     </div>
-
-                    <button class="primary-button submit-btn" id="loginButton" type="submit">
-                        Sign in
-                    </button>
-
-                    <p id="loginMessage" role="status" aria-live="polite"></p>
-                </form>
-
-                <div class="form-footer">
-                    <p>Back to <a class="back-link" href="/">SmartVet Home</a></p>
                 </div>
             </section>
 
-            <!-- Right Column: Hero Graphic Section -->
+            <!-- Keep the existing hero image and two-column design -->
             <section class="login-hero-side">
                 <div class="hero-image-wrapper">
-                    <img src="/images/VetCare.jpg" alt="VetCare Dog Logo" class="dog-hero-img">
+                    <img
+                        src="/images/VetCare.jpg"
+                        alt="SmartVet veterinary care"
+                        class="dog-hero-img"
+                    >
                 </div>
             </section>
 
         </div>
     </main>
-
 </body>
 </html>

@@ -33,11 +33,42 @@ const userSchema = new mongoose.Schema(
             required: true
         },
 
-        phone: {
+                phone: {
             type: String,
             trim: true,
             maxlength: 30,
             default: ''
+        },
+
+        address: {
+            type: String,
+            trim: true,
+            maxlength: 250,
+            default: ''
+        },
+
+        profilePhotoFilename: {
+            type: String,
+            default: '',
+            maxlength: 100
+        },
+
+        profilePhotoContentType: {
+            type: String,
+            enum: ['', 'image/jpeg', 'image/png', 'image/webp'],
+            default: ''
+        },
+
+        profilePhotoOriginalName: {
+            type: String,
+            default: '',
+            maxlength: 255
+        },
+
+        profilePhotoSize: {
+            type: Number,
+            default: 0,
+            min: 0
         },
 
         status: {

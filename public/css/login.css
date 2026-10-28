@@ -1,51 +1,21 @@
 /* ==========================================
-   VETCARE LOGIN
-   TWO-COLUMN CLAYMORPHISM THEME
+   SMARTVET LOGIN / REGISTER PAGE
+   CLAYMORPHISM UI THEME
    ========================================== */
 
-:root {
-    --clay-text: #23425e;
-    --clay-heading: #14314c;
-    --clay-muted: #537490;
-    --clay-blue: #2389e0;
-    --clay-bg: #e6f0fa;
-    --clay-surface: #f1f7fe;
-    --clay-surface-card: #eaf3fd;
-
-    /* Claymorphism signature inner highlight + outer soft drop shadow */
-    --clay-shadow: 
-        inset 0 2px 5px rgba(255, 255, 255, 0.9),
-        inset 0 -3px 6px rgba(20, 55, 90, 0.08),
-        0 18px 36px rgba(35, 82, 130, 0.14),
-        0 6px 12px rgba(35, 82, 130, 0.08);
-
-    --clay-shadow-sm: 
-        inset 0 1px 3px rgba(255, 255, 255, 0.9),
-        inset 0 -2px 4px rgba(20, 55, 90, 0.06),
-        0 6px 14px rgba(35, 82, 130, 0.08);
-
-    --clay-shadow-button: 
-        inset 0 2px 3px rgba(255, 255, 255, 0.5),
-        inset 0 -3px 5px rgba(10, 40, 70, 0.2),
-        0 8px 18px rgba(35, 90, 160, 0.22);
-
-    --clay-red: #c9384f;
+[hidden] {
+    display: none !important;
 }
 
-* {
-    box-sizing: border-box;
-}
-
-body.login-body {
+/* Fullscreen centering container */
+.login-body {
     min-height: 100vh;
     margin: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--clay-text);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    line-height: 1.5;
-    background-color: var(--clay-bg);
+    background-color: var(--clay-bg, #e6f0fa);
     background-image:
         radial-gradient(circle at 10% 10%, rgba(135, 195, 245, 0.5) 0%, transparent 45%),
         radial-gradient(circle at 90% 15%, rgba(150, 220, 205, 0.4) 0%, transparent 50%),
@@ -53,170 +23,170 @@ body.login-body {
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-size: cover;
-    padding: 24px;
+    color: var(--clay-text, #23425e);
 }
 
 .login-wrapper {
     width: 100%;
-    max-width: 980px;
+    max-width: 1000px;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
-/* Two-column main Clay Card */
+/* Main Claymorphic Card Container */
 .login-card {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 32px;
-    width: 100%;
-    padding: 36px;
-    background: var(--clay-surface);
+    align-items: stretch;
+    background: var(--clay-surface, #f1f7fe);
     border: 2px solid rgba(255, 255, 255, 0.9);
     border-radius: 32px;
-    box-shadow: var(--clay-shadow);
+    box-shadow: 
+        inset 0 2px 5px rgba(255, 255, 255, 0.9),
+        inset 0 -3px 6px rgba(20, 55, 90, 0.08),
+        0 20px 40px rgba(35, 82, 130, 0.15),
+        0 6px 12px rgba(35, 82, 130, 0.08);
+    overflow: hidden;
 }
 
-/* Left Form Side */
+/* Form Side */
 .login-form-side {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 12px 16px;
+    padding: 48px;
+    min-width: 0;
 }
 
-/* Top Pill Logo */
+/* Brand Pill */
 .brand-pill {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    align-self: flex-start;
-    padding: 8px 18px;
+    width: fit-content;
+    padding: 6px 14px;
     margin-bottom: 24px;
-    border: 2px solid rgba(255, 255, 255, 0.9);
+    background: rgba(35, 137, 224, 0.12);
+    border: 1px solid rgba(35, 137, 224, 0.3);
     border-radius: 20px;
-    background: var(--clay-surface-card);
-    box-shadow: var(--clay-shadow-sm);
-}
-
-.brand-pill-icon {
-    font-size: 1.1rem;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 .brand-pill-text {
-    color: var(--clay-heading);
-    font-size: 0.95rem;
+    color: var(--clay-blue, #2389e0);
+    font-size: 0.82rem;
     font-weight: 800;
-    letter-spacing: -0.2px;
+    letter-spacing: 0.5px;
 }
 
-/* Headings */
+/* Form Header */
+.form-header {
+    margin-bottom: 24px;
+}
+
 .form-header h1 {
-    margin: 0 0 6px;
-    color: var(--clay-heading);
-    font-size: 2.1rem;
+    margin: 0 0 6px 0;
+    color: var(--clay-heading, #14314c);
+    font-size: 2rem;
     letter-spacing: -0.5px;
 }
 
 .form-header p {
-    margin: 0 0 24px;
-    color: var(--clay-muted);
+    margin: 0;
+    color: var(--clay-muted, #537490);
     font-size: 0.92rem;
 }
 
-/* Form Fields - Sunken Wells */
-.login-form-side .form-field {
+/* Form Fields & Inputs (Sunken Wells) */
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 18px;
 }
 
-.login-form-side .form-field label {
-    display: block;
-    margin-bottom: 6px;
-    color: var(--clay-heading);
+.form-field label {
+    color: var(--clay-heading, #14314c);
     font-size: 0.88rem;
     font-weight: 700;
 }
 
-.login-form-side .form-field input {
-    display: block;
+.form-field input {
     width: 100%;
-    min-height: 48px;
-    padding: 12px 16px;
-    color: var(--clay-text);
+    padding: 13px 16px;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
     background: #e4eefb;
-    border: 2px solid rgba(255, 255, 255, 0.85);
-    border-radius: 18px;
+    color: var(--clay-text, #23425e);
     font: inherit;
     font-size: 0.95rem;
     box-shadow: 
         inset 0 3px 6px rgba(15, 45, 80, 0.08), 
         inset 0 1px 2px rgba(15, 45, 80, 0.06);
     transition: all 0.2s ease;
+    box-sizing: border-box;
 }
 
-.login-form-side .form-field input:focus {
+.form-field input:focus {
     outline: none;
-    border-color: var(--clay-blue);
+    border-color: var(--clay-blue, #2389e0);
     background: #ffffff;
     box-shadow: 
         0 0 0 4px rgba(35, 137, 224, 0.2),
         inset 0 2px 4px rgba(15, 45, 80, 0.04);
 }
 
-/* Submit Button */
-.submit-btn {
-    display: flex;
-    justify-content: center;
+.form-field input::placeholder {
+    color: #8aa3be;
+}
+
+/* Primary Button */
+.primary-button.submit-btn {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     width: 100%;
     min-height: 48px;
-    margin-top: 22px;
+    margin-top: 6px;
     padding: 12px 20px;
     border: 2px solid rgba(255, 255, 255, 0.9);
-    border-radius: 18px;
-    color: #fff;
+    border-radius: 16px;
     background: linear-gradient(135deg, #248ce6, #2d65e2);
-    box-shadow: var(--clay-shadow-button);
-    font: inherit;
+    color: white;
+    font-family: inherit;
     font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 
+        inset 0 2px 3px rgba(255, 255, 255, 0.5),
+        inset 0 -3px 5px rgba(10, 40, 70, 0.2),
+        0 8px 18px rgba(35, 90, 160, 0.22);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.submit-btn:hover:not(:disabled) {
+.primary-button.submit-btn:hover:not(:disabled) {
     transform: translateY(-2px);
 }
 
-.submit-btn:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.submit-btn:disabled {
-    opacity: 0.5;
+.primary-button.submit-btn:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
-    transform: none;
 }
 
-#loginMessage {
-    min-height: 20px;
-    margin-top: 10px;
-    margin-bottom: 0;
-    color: var(--clay-red);
-    font-size: 0.88rem;
-    font-weight: 700;
-}
-
-/* Footer Link */
+/* Form Footer Links */
 .form-footer {
-    margin-top: 20px;
-    color: var(--clay-muted);
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(210, 225, 240, 0.8);
     font-size: 0.88rem;
+    color: var(--clay-muted, #537490);
 }
 
 .form-footer p {
-    margin: 0;
+    margin: 8px 0;
 }
 
 .back-link {
-    color: var(--clay-blue);
+    color: var(--clay-blue, #2389e0);
     font-weight: 700;
     text-decoration: none;
 }
@@ -225,45 +195,78 @@ body.login-body {
     text-decoration: underline;
 }
 
-/* Right Hero Graphic Side */
+.text-button {
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--clay-blue, #2389e0);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.text-button:hover {
+    text-decoration: underline;
+}
+
+/* Messages */
+.form-message {
+    min-height: 20px;
+    margin-top: 14px;
+    margin-bottom: 0;
+    color: var(--clay-red, #c9384f);
+    font-size: 0.88rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.form-message:empty {
+    min-height: 0;
+    margin-top: 0;
+}
+
+/* Hero Side (Right Image Panel) */
 .login-hero-side {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    border-radius: 26px;
-    background: #ffffff;
-    box-shadow: var(--clay-shadow-sm);
+    background: linear-gradient(135deg, rgba(35, 137, 224, 0.08), rgba(14, 138, 102, 0.08));
+    padding: 40px;
+    border-left: 2px solid rgba(255, 255, 255, 0.6);
 }
 
 .hero-image-wrapper {
+    width: 100%;
+    max-width: 360px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    max-width: 320px;
 }
 
 .dog-hero-img {
     width: 100%;
     height: auto;
-    object-fit: contain;
+    object-fit: cover;
+    border-radius: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    background: white;
+    box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.8),
+        0 12px 24px rgba(35, 82, 130, 0.15);
 }
 
-/* Responsive breakpoint */
-@media (max-width: 820px) {
+/* Responsive breakpoint for smaller screens */
+@media (max-width: 768px) {
     .login-card {
         grid-template-columns: 1fr;
-        padding: 24px;
     }
-
+    
     .login-hero-side {
-        order: -1;
-        padding: 30px;
+        display: none; /* Hide hero graphic on mobile devices for cleaner layout */
     }
 
-    .dog-hero-img {
-        max-width: 200px;
+    .login-form-side {
+        padding: 32px 24px;
     }
 }
