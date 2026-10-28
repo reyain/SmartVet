@@ -1522,5 +1522,84 @@ if (copyDeviceTokenButton) {
 }
 
 
+/* Sidebar collapse/expand */
+(function initializeClinicSidebarToggle() {
+    const shell = document.querySelector('.clinic-shell');
+    const toggle = document.getElementById('clinicSidebarToggle');
+
+    if (!shell || !toggle) return;
+
+    const storageKey = 'smartvetClinicSidebarCollapsed';
+
+    function applyCollapsedState(collapsed) {
+        shell.classList.toggle('sidebar-collapsed', collapsed);
+
+        const action = collapsed ? 'Expand' : 'Collapse';
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.setAttribute('aria-label', `${action} sidebar`);
+        toggle.title = `${action} sidebar`;
+    }
+
+    applyCollapsedState(
+        localStorage.getItem(storageKey) === 'true'
+    );
+
+    toggle.addEventListener('click', () => {
+        const collapsed = !shell.classList.contains('sidebar-collapsed');
+
+        applyCollapsedState(collapsed);
+        localStorage.setItem(storageKey, String(collapsed));
+    });
+})();
+
+
+/* SmartVet shared light/dark theme */
+(function initializeClinicTheme() {
+    const toggle = document.getElementById('clinicThemeToggle');
+
+    if (!toggle) return;
+
+    const icon = toggle.querySelector('.theme-toggle-icon');
+    const label = toggle.querySelector('.theme-toggle-label');
+    const storageKey = 'smartvetTheme';
+
+    function applyTheme(theme) {
+        const isDark = theme === 'dark';
+
+        document.body.dataset.theme = isDark ? 'dark' : 'light';
+
+        toggle.setAttribute('aria-pressed', String(isDark));
+        toggle.setAttribute(
+            'aria-label',
+            isDark ? 'Switch to light mode' : 'Switch to dark mode'
+        );
+        toggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+
+        if (icon) {
+            icon.textContent = isDark ? '☀' : '☾';
+        }
+
+        if (label) {
+            label.textContent = isDark ? 'Light mode' : 'Dark mode';
+        }
+    }
+
+    applyTheme(localStorage.getItem(storageKey) === 'dark' ? 'dark' : 'light');
+
+    toggle.addEventListener('click', () => {
+    const nextTheme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+
+    document.body.classList.add('theme-transitioning');
+
+    applyTheme(nextTheme);
+    localStorage.setItem(storageKey, nextTheme);
+
+    window.setTimeout(() => {
+        document.body.classList.remove('theme-transitioning');
+    }, 400);
+});
+})();
+
+
 switchView('overview');
 verifyVeterinarySession();

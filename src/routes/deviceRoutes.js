@@ -400,4 +400,72 @@ router.patch(
     }
 );
 
+// POST /api/clinic/devices/:deviceId/renew-token
+// Generate a replacement credential for an existing device.
+router.post(
+    '/:deviceId/renew-token',
+    [
+        param('deviceId')
+            .isMongoId()
+            .withMessage('Invalid device ID.')
+    ],
+    async (req, res, next) => {
+        if (!validateRequest(req, res)) {
+            return;
+        }
+
+        try {
+            const device = await Device.findById(req.params.deviceId);
+
+            if (!device) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Device not found.'
+                });
+            }
+
+            // Revoked devices cannot be reactivated or renewed.
+            if (device.status === 'revoked') {
+                return res.status(409).json({
+                    success: false,
+                    message: 'A revoked device cannot be renewed.'
+                });
+            }
+
+            // Generate a replacement credential.
+            const deviceToken = crypto.randomBytes(32).toString('hex');
+
+            device.credentialHash = crypto
+                .createHash('sha256')
+                .update(deviceToken, 'utf8')
+                .digest('hex');
+
+            await device.save();
+
+            await writeDeviceAudit(
+                req,
+                'DEVICE_TOKEN_RENEWED',
+                device,
+                `Renewed the authentication token for device ${device.deviceCode}.`
+            );
+
+            // Return the raw token only once.
+            return res.status(200).json({
+                success: true,
+                message:
+                    'Device token renewed. Store the new token securely; it will not be returned again.',
+                device: {
+                    id: device._id.toString(),
+                    deviceCode: device.deviceCode,
+                    deviceType: device.deviceType,
+                    status: device.status
+                },
+                deviceToken
+            });
+        } catch (error) {
+            return next(error);
+        }
+    }
+);
+
 module.exports = router;

@@ -6,6 +6,7 @@ const Pet = require('../models/Pet');
 const User = require('../models/User');
 const FeedingSchedule = require('../models/FeedingSchedule');
 const FeedingEvent = require('../models/FeedingEvent');
+const ActivityRecord = require('../models/ActivityRecord');
 const AuditLog = require('../models/AuditLog');
 
 const Notification = require('../models/Notification');
@@ -355,6 +356,155 @@ router.post(
                 return res.status(400).json({
                     success: false,
                     message: 'The feeding event failed validation.'
+                });
+            }
+
+            return next(error);
+        }
+    }
+);
+
+// POST /api/iot/activity-records
+// Record an activity reading reported by an authenticated smart collar.
+router.post(
+    '/activity-records',
+    [
+        body('activity')
+            .isIn([
+                'walking',
+                'running',
+                'resting',
+                'inactive',
+                'unknown'
+            ])
+            .withMessage('Unsupported activity classification.'),
+
+        body('measuredAt')
+            .optional()
+            .isISO8601()
+            .withMessage('Measurement time must be a valid ISO date.')
+            .bail()
+            .toDate(),
+
+        body('durationSeconds')
+            .optional({ nullable: true })
+            .isInt({ min: 0, max: 86400 })
+            .withMessage(
+                'Duration must be a whole number between 0 and 86400 seconds.'
+            )
+            .bail()
+            .toInt(),
+
+        body('sensorSummary')
+            .optional({ nullable: true })
+            .isObject()
+            .withMessage('Sensor summary must be an object.'),
+
+        body('sensorSummary.averageAccelerationMagnitude')
+            .optional({ nullable: true })
+            .isFloat({ min: 0 })
+            .withMessage('Average acceleration cannot be negative.')
+            .bail()
+            .toFloat(),
+
+        body('sensorSummary.accelerationVariance')
+            .optional({ nullable: true })
+            .isFloat({ min: 0 })
+            .withMessage('Acceleration variance cannot be negative.')
+            .bail()
+            .toFloat(),
+
+        body('sensorSummary.sampleCount')
+            .optional({ nullable: true })
+            .isInt({ min: 1 })
+            .withMessage('Sample count must be a positive whole number.')
+            .bail()
+            .toInt()
+    ],
+    async (req, res, next) => {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please correct the submitted activity information.',
+                errors: errors.array().map((error) => ({
+                    field: error.path,
+                    message: error.msg
+                }))
+            });
+        }
+
+        try {
+            const device = req.device;
+
+            // Only smart collars may submit activity readings.
+            if (device.deviceType !== 'collar') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Only collar devices can submit activity records.'
+                });
+            }
+
+            // Use the pet assigned to the authenticated device.
+            if (!device.petId) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Assign this collar to a verified pet first.'
+                });
+            }
+
+            const pet = await Pet.findOne({
+                _id: device.petId,
+                registrationStatus: 'approved'
+            }).select('_id name petCode');
+
+            if (!pet) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'The assigned pet is not currently verified.'
+                });
+            }
+
+            const record = await ActivityRecord.create({
+                petId: pet._id,
+                deviceId: device._id,
+                activity: req.body.activity,
+                measuredAt: req.body.measuredAt
+                    ? new Date(req.body.measuredAt)
+                    : new Date(),
+                durationSeconds: req.body.durationSeconds,
+                sensorSummary: req.body.sensorSummary
+            });
+
+            await AuditLog.create({
+                source: 'device',
+                action: 'ACTIVITY_RECORD_RECORDED',
+                entityType: 'activity_record',
+                entityId: record._id,
+                summary:
+                    `Collar ${device.deviceCode} reported ${record.activity} activity for pet ${pet.name}.`
+            });
+
+            return res.status(201).json({
+                success: true,
+                message: 'Activity record recorded successfully.',
+                record: {
+                    id: record._id.toString(),
+                    petId: record.petId.toString(),
+                    deviceId: record.deviceId.toString(),
+                    activity: record.activity,
+                    measuredAt: record.measuredAt,
+                    durationSeconds: record.durationSeconds ?? null,
+                    sensorSummary: record.sensorSummary ?? null,
+                    createdAt: record.createdAt
+                }
+            });
+        } catch (error) {
+            if (error.name === 'ValidationError') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'The activity record failed validation.'
                 });
             }
 

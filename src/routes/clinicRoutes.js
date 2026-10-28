@@ -8,6 +8,7 @@ const path = require('path');
 
 const Pet = require('../models/Pet');
 const VaccinationRecord = require('../models/VaccinationRecord');
+const ActivityRecord = require('../models/ActivityRecord');
 
 const {
     requireAuth,
@@ -89,6 +90,86 @@ router.get('/', (req, res) => {
             role: req.user.role
         }
     });
+});
+
+// GET /api/clinic/activity-records
+// Retrieve recent activity readings reported by SmartVet collars.
+router.get('/activity-records', async (req, res, next) => {
+    try {
+        const { petId, activity } = req.query;
+
+        // Validate an optional pet ID filter.
+        if (petId && !mongoose.isValidObjectId(petId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid pet ID.'
+            });
+        }
+
+        // Validate an optional activity filter.
+        const allowedActivities = [
+            'walking',
+            'running',
+            'resting',
+            'inactive',
+            'unknown'
+        ];
+
+        if (activity && !allowedActivities.includes(activity)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid activity classification.'
+            });
+        }
+
+        const filter = {};
+
+        if (petId) {
+            filter.petId = petId;
+        }
+
+        if (activity) {
+            filter.activity = activity;
+        }
+
+        const records = await ActivityRecord.find(filter)
+            .populate('petId', 'name petCode species')
+            .populate('deviceId', 'deviceCode deviceType status')
+            .sort({ measuredAt: -1 })
+            .limit(100)
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            count: records.length,
+            records: records.map((record) => ({
+                id: record._id.toString(),
+                pet: record.petId
+                    ? {
+                        id: record.petId._id.toString(),
+                        name: record.petId.name,
+                        petCode: record.petId.petCode,
+                        species: record.petId.species
+                    }
+                    : null,
+                device: record.deviceId
+                    ? {
+                        id: record.deviceId._id.toString(),
+                        deviceCode: record.deviceId.deviceCode,
+                        deviceType: record.deviceId.deviceType,
+                        status: record.deviceId.status
+                    }
+                    : null,
+                activity: record.activity,
+                measuredAt: record.measuredAt,
+                durationSeconds: record.durationSeconds ?? null,
+                sensorSummary: record.sensorSummary ?? null,
+                createdAt: record.createdAt
+            }))
+        });
+    } catch (error) {
+        return next(error);
+    }
 });
 
 // 1. View pending pet registrations.

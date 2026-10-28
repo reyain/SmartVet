@@ -1000,3 +1000,573 @@ button:disabled {
     padding: 12px;
     color: #666;
 }
+
+
+/* =========================================================
+   SmartVet Sidebar Redesign - Step 34.10
+   ========================================================= */
+
+.sidebar-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.sidebar-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2890e4, #3165df);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    box-shadow: 0 5px 12px rgba(49, 101, 223, 0.2);
+}
+
+.sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(130, 150, 175, 0.25);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.65);
+    color: var(--clay-heading, #24344d);
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(40, 144, 228, 0.12);
+    border-color: rgba(40, 144, 228, 0.4);
+}
+
+.sidebar-toggle:focus-visible {
+    outline: 3px solid rgba(40, 144, 228, 0.35);
+    outline-offset: 3px;
+}
+
+/* Collapsed veterinary sidebar */
+.clinic-shell {
+    transition: grid-template-columns 0.25s ease;
+}
+
+.clinic-shell.sidebar-collapsed {
+    grid-template-columns: 88px minmax(0, 1fr);
+}
+
+.clinic-shell.sidebar-collapsed .clinic-sidebar {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.clinic-shell.sidebar-collapsed .sidebar-topbar {
+    flex-direction: column;
+}
+
+.clinic-shell.sidebar-collapsed .sidebar-heading {
+    display: none;
+}
+
+.clinic-shell.sidebar-collapsed .clinic-navigation .nav-item {
+    justify-content: center;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.clinic-shell.sidebar-collapsed .clinic-navigation .nav-item > span:not(.nav-icon) {
+    display: none;
+}
+
+.clinic-shell.sidebar-collapsed .clinic-navigation .nav-icon {
+    margin: 0;
+}
+
+.clinic-shell.sidebar-collapsed .sidebar-footer {
+    justify-content: center;
+}
+
+.clinic-shell.sidebar-collapsed .sidebar-footer > div {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .clinic-shell.sidebar-collapsed {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .clinic-shell.sidebar-collapsed .sidebar-topbar {
+        flex-direction: row;
+    }
+}
+
+/* SmartVet theme toggle */
+.sidebar-theme-area {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(130, 150, 175, 0.22);
+}
+
+.sidebar-theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid rgba(130, 150, 175, 0.25);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.45);
+    color: var(--clay-text);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.sidebar-theme-toggle:hover {
+    background: rgba(35, 137, 224, 0.12);
+    border-color: var(--clay-blue);
+}
+
+.theme-toggle-icon {
+    display: inline-flex;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(35, 137, 224, 0.12);
+    color: var(--clay-blue);
+    font-size: 1.2rem;
+}
+
+.theme-toggle-label {
+    flex: 1;
+}
+
+.clinic-shell.sidebar-collapsed .sidebar-theme-toggle {
+    justify-content: center;
+    padding: 8px 4px;
+}
+
+.clinic-shell.sidebar-collapsed .theme-toggle-label {
+    display: none;
+}
+
+/* SmartVet veterinary dark theme */
+body[data-theme="dark"] {
+    color-scheme: dark;
+
+    --clay-text: #dbe7f5;
+    --clay-heading: #f1f5fb;
+    --clay-muted: #a7b8cc;
+    --clay-bg: #0d1726;
+    --clay-surface: #152337;
+    --clay-surface-card: #1b2b40;
+    --clay-surface-subtle: #263b51;
+    --clay-white: #1b2b40;
+
+    --clay-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.025),
+        0 14px 28px rgba(0, 0, 0, 0.24);
+
+    --clay-shadow-sm:
+        inset 0 1px 2px rgba(255, 255, 255, 0.02),
+        0 6px 14px rgba(0, 0, 0, 0.2);
+
+    --clay-shadow-button:
+        inset 0 1px 2px rgba(255, 255, 255, 0.08),
+        0 8px 18px rgba(0, 0, 0, 0.25);
+
+    background-color: var(--clay-bg);
+    background-image:
+        radial-gradient(circle at 10% 10%, rgba(35, 137, 224, 0.10), transparent 45%),
+        radial-gradient(circle at 90% 15%, rgba(14, 138, 102, 0.07), transparent 50%);
+    color: var(--clay-text);
+}
+
+body[data-theme="dark"] .site-header,
+body[data-theme="dark"] .clinic-sidebar {
+    background: var(--clay-surface);
+    color: var(--clay-text);
+    border-color: #2b3d53;
+}
+
+body[data-theme="dark"] .stat-card,
+body[data-theme="dark"] .section-card,
+body[data-theme="dark"] .pet-card,
+body[data-theme="dark"] .feeding-card,
+body[data-theme="dark"] .qr-panel,
+body[data-theme="dark"] .device-panel,
+body[data-theme="dark"] .empty-state {
+    background-color: var(--clay-surface-card);
+    color: var(--clay-text);
+    border-color: #2b3d53;
+}
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea {
+    color: var(--clay-text);
+    background-color: #142337;
+    border-color: #40536a;
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+    color: #9aadc2;
+}
+
+body[data-theme="dark"] th {
+    background-color: #22364d;
+    color: var(--clay-heading);
+}
+
+body[data-theme="dark"] td,
+body[data-theme="dark"] th {
+    border-color: #34485f;
+}
+
+body[data-theme="dark"] .muted,
+body[data-theme="dark"] .sidebar-footer p {
+    color: var(--clay-muted);
+}
+
+body[data-theme="dark"] a {
+    color: #83c3ff;
+}
+
+body[data-theme="dark"] .sidebar-toggle,
+body[data-theme="dark"] .sidebar-theme-toggle {
+    background-color: #203149;
+    color: var(--clay-text);
+    border-color: #40536a;
+}
+
+body[data-theme="dark"] .sidebar-theme-toggle:hover,
+body[data-theme="dark"] .sidebar-toggle:hover {
+    background-color: #2a405b;
+}
+
+body[data-theme="dark"] .sidebar-theme-area {
+    border-color: #34485f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .clinic-shell,
+    .sidebar-toggle,
+    .sidebar-theme-toggle {
+        transition: none;
+    }
+}
+
+
+/* Step 34.13.5.2: Fix veterinary cards in dark mode */
+
+/* Feeding History cards */
+body[data-theme="dark"] .feeding-card,
+body[data-theme="dark"] .feeding-card:hover {
+    background: var(--clay-surface-card);
+    color: var(--clay-text);
+    border-color: #3b5068;
+}
+
+body[data-theme="dark"] .feeding-card h3,
+body[data-theme="dark"] .feeding-card h4 {
+    color: var(--clay-heading);
+}
+
+body[data-theme="dark"] .feeding-card p {
+    color: var(--clay-text);
+}
+
+/* Individual feeding details */
+body[data-theme="dark"] .feeding-event-detail {
+    background: var(--clay-surface-subtle);
+    color: var(--clay-text);
+    border: 1px solid #40536a;
+}
+
+body[data-theme="dark"] .feeding-event-detail dt {
+    color: #afc5dd;
+}
+
+body[data-theme="dark"] .feeding-event-detail dd {
+    color: #f1f5fb;
+}
+
+/* Other cards with hard-coded white hover backgrounds */
+body[data-theme="dark"] .pet-card:hover,
+body[data-theme="dark"] .quick-action:hover {
+    background: var(--clay-surface-card);
+    color: var(--clay-text);
+}
+
+/* Keep focused form fields readable */
+body[data-theme="dark"] input:focus,
+body[data-theme="dark"] select:focus,
+body[data-theme="dark"] textarea:focus,
+body[data-theme="dark"] .inline-select:focus {
+    background: #142337;
+    color: var(--clay-text);
+    border-color: var(--clay-blue);
+}
+
+/* SmartVet dashboard entrance animation */
+@keyframes smartvetDashboardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.clinic-shell {
+    animation: smartvetDashboardEnter 420ms ease-out both;
+}
+
+/* Smooth color transitions during theme changes */
+body.theme-transitioning,
+body.theme-transitioning * {
+    transition:
+        background-color 350ms ease,
+        color 350ms ease,
+        border-color 350ms ease,
+        box-shadow 350ms ease !important;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .clinic-shell {
+        animation: none;
+    }
+
+    body.theme-transitioning,
+    body.theme-transitioning * {
+        transition: none !important;
+    }
+}
+
+/* Step 33.28: Device Management styling */
+
+/* Registered device list */
+#devicesSection #devicesList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+#devicesSection .device-list-item {
+    min-width: 0;
+    padding: 22px;
+    border: 1px solid rgba(120, 140, 165, 0.3);
+    border-radius: 20px;
+    background: var(--clay-surface-card, #ffffff);
+    color: var(--clay-text, #263445);
+    box-shadow: 0 5px 15px rgba(31, 45, 61, 0.06);
+    overflow-wrap: anywhere;
+    transition:
+        background-color 200ms ease,
+        border-color 200ms ease,
+        box-shadow 200ms ease;
+}
+
+#devicesSection .device-list-item:hover {
+    box-shadow: 0 8px 22px rgba(31, 45, 61, 0.1);
+}
+
+/* Device code and status */
+#devicesSection .device-list-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+#devicesSection .device-list-heading h3 {
+    margin: 0;
+    color: var(--clay-heading, #263445);
+    font-size: 1.1rem;
+    overflow-wrap: anywhere;
+}
+
+/* Device status badges */
+#devicesSection .device-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    max-width: 100%;
+    padding: 5px 11px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    overflow-wrap: anywhere;
+}
+
+#devicesSection .device-status-active {
+    color: #166534;
+    background: #dcfce7;
+    border-color: #86efac;
+}
+
+#devicesSection .device-status-disabled {
+    color: #92400e;
+    background: #fef3c7;
+    border-color: #fcd34d;
+}
+
+#devicesSection .device-status-revoked {
+    color: #991b1b;
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+/* Device information */
+#devicesSection .device-detail {
+    margin: 10px 0;
+    color: var(--clay-text, #263445);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+#devicesSection .device-detail strong {
+    color: var(--clay-heading, #263445);
+}
+
+/* Pet assignment and status controls */
+#devicesSection .device-card-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(120, 140, 165, 0.25);
+}
+
+#devicesSection .device-card-actions label {
+    grid-column: 1 / -1;
+    color: var(--clay-heading, #263445);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+#devicesSection .device-card-actions select {
+    width: 100%;
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid rgba(120, 140, 165, 0.45);
+    border-radius: 12px;
+    background: var(--clay-surface-card, #ffffff);
+    color: var(--clay-text, #263445);
+    font: inherit;
+}
+
+#devicesSection .device-card-actions button {
+    min-height: 42px;
+    max-width: 100%;
+    white-space: normal;
+}
+
+#devicesSection .device-card-actions select:disabled,
+#devicesSection .device-card-actions button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Device Management in dark mode */
+body[data-theme="dark"] #devicesSection .workspace-panel,
+body[data-theme="dark"] #devicesSection .device-list-item {
+    background: var(--clay-surface-card, #172334);
+    color: var(--clay-text, #e5edf6);
+    border-color: #34465c;
+}
+
+body[data-theme="dark"] #devicesSection .device-list-heading h3,
+body[data-theme="dark"] #devicesSection .device-detail,
+body[data-theme="dark"] #devicesSection .device-detail strong,
+body[data-theme="dark"] #devicesSection .device-card-actions label {
+    color: var(--clay-text, #e5edf6);
+}
+
+body[data-theme="dark"] #devicesSection .device-card-actions {
+    border-top-color: #34465c;
+}
+
+body[data-theme="dark"] #devicesSection .device-card-actions select {
+    background: #172334;
+    color: #e5edf6;
+    border-color: #465b73;
+}
+
+body[data-theme="dark"] #devicesSection .device-status-active {
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+    border-color: #27804b;
+}
+
+body[data-theme="dark"] #devicesSection .device-status-disabled {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fcd34d;
+    border-color: #92621b;
+}
+
+body[data-theme="dark"] #devicesSection .device-status-revoked {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border-color: #a33b43;
+}
+
+/* Smaller screens */
+@media (max-width: 600px) {
+    #devicesSection .device-list-item {
+        padding: 16px;
+    }
+
+    #devicesSection .device-card-actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #devicesSection .device-card-actions label {
+        grid-column: 1;
+    }
+
+    #devicesSection .device-card-actions button {
+        width: 100%;
+    }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    #devicesSection .device-list-item {
+        transition: none;
+    }
+}

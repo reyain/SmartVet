@@ -896,3 +896,492 @@ button:disabled {
         width: 100%;
     }
 }
+
+
+/* =========================================================
+   SmartVet Sidebar Redesign - Step 34.10
+   ========================================================= */
+
+.sidebar-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.sidebar-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #248ce6, #2d65e2);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    box-shadow: 0 5px 12px rgba(45, 101, 226, 0.2);
+}
+
+.sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(130, 150, 175, 0.25);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.65);
+    color: var(--clay-heading, #24344d);
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(36, 140, 230, 0.12);
+    border-color: rgba(36, 140, 230, 0.4);
+}
+
+.sidebar-toggle:focus-visible {
+    outline: 3px solid rgba(36, 140, 230, 0.35);
+    outline-offset: 3px;
+}
+
+/* Collapsed pet-owner sidebar */
+.owner-shell {
+    transition: grid-template-columns 0.25s ease;
+}
+
+.owner-shell.sidebar-collapsed {
+    grid-template-columns: 88px minmax(0, 1fr);
+}
+
+.owner-shell.sidebar-collapsed .owner-sidebar {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.owner-shell.sidebar-collapsed .sidebar-topbar {
+    flex-direction: column;
+}
+
+.owner-shell.sidebar-collapsed .sidebar-heading {
+    display: none;
+}
+
+.owner-shell.sidebar-collapsed .owner-navigation .nav-item {
+    justify-content: center;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.owner-shell.sidebar-collapsed .owner-navigation .nav-item > span:not(.nav-icon) {
+    display: none;
+}
+
+.owner-shell.sidebar-collapsed .owner-navigation .nav-icon {
+    margin: 0;
+}
+
+.owner-shell.sidebar-collapsed .sidebar-footer {
+    justify-content: center;
+}
+
+.owner-shell.sidebar-collapsed .sidebar-footer > div {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .owner-shell.sidebar-collapsed {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .owner-shell.sidebar-collapsed .sidebar-topbar {
+        flex-direction: row;
+    }
+}
+
+/* SmartVet theme toggle */
+.sidebar-theme-area {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(130, 150, 175, 0.22);
+}
+
+.sidebar-theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid rgba(130, 150, 175, 0.25);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.45);
+    color: var(--clay-text);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.sidebar-theme-toggle:hover {
+    background: rgba(36, 140, 230, 0.12);
+    border-color: var(--clay-blue);
+}
+
+.theme-toggle-icon {
+    display: inline-flex;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(36, 140, 230, 0.12);
+    color: var(--clay-blue);
+    font-size: 1.2rem;
+}
+
+.theme-toggle-label {
+    flex: 1;
+}
+
+.owner-shell.sidebar-collapsed .sidebar-theme-toggle {
+    justify-content: center;
+    padding: 8px 4px;
+}
+
+.owner-shell.sidebar-collapsed .theme-toggle-label {
+    display: none;
+}
+
+/* SmartVet pet-owner dark theme */
+body[data-theme="dark"] {
+    color-scheme: dark;
+
+    --clay-text: #dbe7f5;
+    --clay-heading: #f1f5fb;
+    --clay-muted: #a7b8cc;
+    --clay-bg: #0d1726;
+    --clay-surface: #152337;
+    --clay-surface-card: #1b2b40;
+    --clay-surface-subtle: #263b51;
+
+    --clay-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.025),
+        0 14px 28px rgba(0, 0, 0, 0.24);
+
+    --clay-shadow-sm:
+        inset 0 1px 2px rgba(255, 255, 255, 0.02),
+        0 6px 14px rgba(0, 0, 0, 0.2);
+
+    --clay-shadow-button:
+        inset 0 1px 2px rgba(255, 255, 255, 0.08),
+        0 8px 18px rgba(0, 0, 0, 0.25);
+
+    background-color: var(--clay-bg);
+    background-image:
+        radial-gradient(circle at 10% 10%, rgba(36, 140, 230, 0.10), transparent 45%),
+        radial-gradient(circle at 90% 15%, rgba(14, 138, 102, 0.07), transparent 50%);
+    color: var(--clay-text);
+}
+
+body[data-theme="dark"] .site-header,
+body[data-theme="dark"] .owner-sidebar {
+    background: var(--clay-surface);
+    color: var(--clay-text);
+    border-color: #2b3d53;
+}
+
+body[data-theme="dark"] .stat-card,
+body[data-theme="dark"] .section-card,
+body[data-theme="dark"] .pet-card,
+body[data-theme="dark"] .feeding-card,
+body[data-theme="dark"] .qr-panel,
+body[data-theme="dark"] .empty-state,
+body[data-theme="dark"] .notification-card {
+    background-color: var(--clay-surface-card);
+    color: var(--clay-text);
+    border-color: #2b3d53;
+}
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea {
+    color: var(--clay-text);
+    background-color: #142337;
+    border-color: #40536a;
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+    color: #9aadc2;
+}
+
+body[data-theme="dark"] th {
+    background-color: #22364d;
+    color: var(--clay-heading);
+}
+
+body[data-theme="dark"] td,
+body[data-theme="dark"] th {
+    border-color: #34485f;
+}
+
+body[data-theme="dark"] .muted,
+body[data-theme="dark"] .sidebar-footer p {
+    color: var(--clay-muted);
+}
+
+body[data-theme="dark"] a {
+    color: #83c3ff;
+}
+
+body[data-theme="dark"] .sidebar-toggle,
+body[data-theme="dark"] .sidebar-theme-toggle {
+    background-color: #203149;
+    color: var(--clay-text);
+    border-color: #40536a;
+}
+
+body[data-theme="dark"] .sidebar-theme-toggle:hover,
+body[data-theme="dark"] .sidebar-toggle:hover {
+    background-color: #2a405b;
+}
+
+body[data-theme="dark"] .sidebar-theme-area {
+    border-color: #34485f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .owner-shell,
+    .sidebar-toggle,
+    .sidebar-theme-toggle {
+        transition: none;
+    }
+}
+
+
+/* Step 34.13.5.1: Fix pet-owner cards in dark mode */
+
+body[data-theme="dark"] .owner-notification-card,
+body[data-theme="dark"] .owner-notification-card.is-read,
+body[data-theme="dark"] .owner-notification-card.is-unread {
+    background: var(--clay-surface-card);
+    color: var(--clay-text);
+    border-color: #3b5068;
+}
+
+body[data-theme="dark"] .owner-notification-card.is-unread {
+    border-left: 5px solid var(--clay-blue);
+}
+
+body[data-theme="dark"] .owner-notification-card h3 {
+    color: var(--clay-heading);
+}
+
+body[data-theme="dark"] .owner-notification-card p {
+    color: var(--clay-text);
+}
+
+body[data-theme="dark"] .owner-notification-card .notification-priority.high {
+    color: #ffc2c2;
+    background: rgba(220, 70, 85, 0.2);
+}
+
+body[data-theme="dark"] .owner-notification-card button {
+    color: #ffffff;
+    background: #245da5;
+    border-color: #477fbe;
+}
+
+/* Owner Feeding History */
+body[data-theme="dark"] .owner-feeding-event-card,
+body[data-theme="dark"] .owner-feeding-event-card:hover {
+    background: var(--clay-surface-card);
+    color: var(--clay-text);
+    border-color: #3b5068;
+}
+
+body[data-theme="dark"] .owner-feeding-event-card h3 {
+    color: var(--clay-heading);
+}
+
+body[data-theme="dark"] .owner-feeding-event-card p,
+body[data-theme="dark"] .owner-feeding-event-card dt,
+body[data-theme="dark"] .owner-feeding-event-card dd {
+    color: var(--clay-text);
+}
+
+
+/* Step 34.13.5.4: Restore feeding status indicators in dark mode */
+
+body[data-theme="dark"] .owner-feeding-event-card.feeding-status-cancelled {
+    border-left: 5px solid #f59e0b;
+}
+
+body[data-theme="dark"] .owner-feeding-event-card.feeding-status-failed {
+    border-left: 5px solid #ef4444;
+}
+
+body[data-theme="dark"] .owner-feeding-event-card.feeding-status-completed {
+    border-left: 5px solid #22c55e;
+}
+
+body[data-theme="dark"] .owner-feeding-event-card.feeding-status-running {
+    border-left: 5px solid #3b82f6;
+}
+
+
+/* Step 34.13.5.5: Improve pet status badge contrast in dark mode */
+
+body[data-theme="dark"] .pet-status.approved {
+    background: rgba(16, 185, 129, 0.18);
+    color: #86efac;
+    border: 1px solid #34d399;
+}
+
+body[data-theme="dark"] .pet-status.needs_verification {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fecaca;
+    border: 1px solid #f87171;
+}
+
+body[data-theme="dark"] .pet-status.pending {
+    background: #ffe396;
+    color: #614400;
+    border: 1px solid #e6bd55;
+}
+
+
+/* Step 34.13.5.7: Responsive owner dashboard layout */
+
+/* Prevent the main content from forcing horizontal overflow */
+.owner-shell {
+    grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+    width: 100%;
+}
+
+main.owner-main {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.owner-view {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Automatically adapt pet cards to the available width */
+.pet-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(min(100%, 280px), 1fr)
+    );
+    gap: 18px;
+    width: 100%;
+    min-width: 0;
+}
+
+.pet-card {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+}
+
+.pet-card img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Medium screens */
+@media (max-width: 1050px) {
+    .owner-shell {
+        grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+    }
+
+    .pet-grid {
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(min(100%, 260px), 1fr)
+        );
+    }
+}
+
+/* Mobile and narrow screens */
+@media (max-width: 760px) {
+    .owner-shell {
+        display: block;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    main.owner-main {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .pet-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Prevent long text or identifiers from stretching cards */
+.pet-card h3,
+.pet-card p {
+    overflow-wrap: anywhere;
+}
+
+/* SmartVet dashboard entrance animation */
+@keyframes smartvetDashboardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.owner-shell {
+    animation: smartvetDashboardEnter 420ms ease-out both;
+}
+
+/* Smooth color transitions during theme changes */
+body.theme-transitioning,
+body.theme-transitioning * {
+    transition:
+        background-color 350ms ease,
+        color 350ms ease,
+        border-color 350ms ease,
+        box-shadow 350ms ease !important;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .owner-shell {
+        animation: none;
+    }
+
+    body.theme-transitioning,
+    body.theme-transitioning * {
+        transition: none !important;
+    }
+}
