@@ -24,6 +24,24 @@ const ownerFeedingPetFilter = document.getElementById('ownerFeedingPetFilter');
 const ownerFeedingStatusFilter = document.getElementById('ownerFeedingStatusFilter');
 const applyOwnerFeedingFiltersButton = document.getElementById('applyOwnerFeedingFiltersButton');
 
+
+// Owner Activity Monitoring
+const refreshOwnerActivityButton = document.getElementById(
+    'refreshOwnerActivityButton'
+);
+const ownerActivitySummary = document.getElementById(
+    'ownerActivitySummary'
+);
+const ownerActivityRecordsList = document.getElementById(
+    'ownerActivityRecordsList'
+);
+const ownerActivityPetFilter = document.getElementById(
+    'ownerActivityPetFilter'
+);
+const ownerActivityTypeFilter = document.getElementById(
+    'ownerActivityTypeFilter'
+);
+
 // Sidebar counts & Overview stats
 const sidebarPetsCount = document.getElementById('sidebarPetsCount');
 const sidebarUnreadCount = document.getElementById('sidebarUnreadCount');
@@ -584,6 +602,138 @@ async function populateOwnerFeedingPetFilter() {
     }
 }
 
+// Owner Activity Monitoring: load activity records for the owner's pets.
+async function loadOwnerActivityRecords() {
+    if (!ownerActivityRecordsList) return;
+
+    ownerActivityRecordsList.setAttribute('aria-busy', 'true');
+
+    if (refreshOwnerActivityButton) {
+        refreshOwnerActivityButton.disabled = true;
+    }
+
+    if (ownerActivitySummary) {
+        showMessage(ownerActivitySummary, 'Loading your pets\' activity records...');
+    }
+
+    const loadingMessage = document.createElement('p');
+    loadingMessage.className = 'muted';
+    loadingMessage.textContent = 'Loading activity records...';
+    ownerActivityRecordsList.replaceChildren(loadingMessage);
+
+    try {
+        const query = new URLSearchParams();
+
+        if (ownerActivityPetFilter?.value) {
+            query.set('petId', ownerActivityPetFilter.value);
+        }
+
+        if (ownerActivityTypeFilter?.value) {
+            query.set('activity', ownerActivityTypeFilter.value);
+        }
+
+        const queryString = query.toString();
+        const url = queryString
+            ? `/api/owner/activity-records?${queryString}`
+            : '/api/owner/activity-records';
+
+        const data = await apiRequest(url);
+        const records = Array.isArray(data.records) ? data.records : [];
+
+        ownerActivityRecordsList.replaceChildren();
+
+        if (records.length === 0) {
+            const emptyMessage = document.createElement('p');
+            emptyMessage.className = 'muted';
+            emptyMessage.textContent =
+                'No activity records were found for the selected filters.';
+            ownerActivityRecordsList.appendChild(emptyMessage);
+
+            if (ownerActivitySummary) {
+                showMessage(ownerActivitySummary, 'No matching activity records found.');
+            }
+
+            return;
+        }
+
+        records.forEach((record) => {
+            const card = document.createElement('article');
+            card.className = 'owner-activity-card';
+
+            const heading = document.createElement('h3');
+            const petName = record.pet?.name || 'Your pet';
+            const activity = String(record.activity || 'unknown');
+            const activityLabel =
+                activity.charAt(0).toUpperCase() + activity.slice(1);
+
+            heading.textContent = `${petName} — ${activityLabel}`;
+
+            const collarLine = document.createElement('p');
+            collarLine.className = 'muted';
+            collarLine.textContent =
+                `Collar: ${record.device?.deviceCode || 'Unknown device'}`;
+
+            const durationLine = document.createElement('p');
+            durationLine.textContent =
+                record.durationSeconds === null ||
+                record.durationSeconds === undefined
+                    ? 'Duration: Not provided'
+                    : `Duration: ${record.durationSeconds} seconds`;
+
+            const measuredLine = document.createElement('p');
+            measuredLine.className = 'muted';
+
+            const measuredDate = record.measuredAt
+                ? new Date(record.measuredAt)
+                : null;
+
+            measuredLine.textContent =
+                measuredDate && !Number.isNaN(measuredDate.getTime())
+                    ? `Measured: ${measuredDate.toLocaleString()}`
+                    : 'Measured: Unknown time';
+
+            card.append(
+                heading,
+                collarLine,
+                durationLine,
+                measuredLine
+            );
+
+            ownerActivityRecordsList.appendChild(card);
+        });
+
+        if (ownerActivitySummary) {
+            showMessage(
+                ownerActivitySummary,
+                `${records.length} activity record(s) loaded.`
+            );
+        }
+    } catch (error) {
+        ownerActivityRecordsList.replaceChildren();
+
+        const errorMessage = document.createElement('p');
+        errorMessage.className = 'message error';
+        errorMessage.textContent =
+            error.message || 'Unable to load activity records.';
+
+        ownerActivityRecordsList.appendChild(errorMessage);
+
+        if (ownerActivitySummary) {
+            showMessage(
+                ownerActivitySummary,
+                error.message || 'Unable to load activity records.',
+                'error'
+            );
+        }
+    } finally {
+        ownerActivityRecordsList.setAttribute('aria-busy', 'false');
+
+        if (refreshOwnerActivityButton) {
+            refreshOwnerActivityButton.disabled = false;
+        }
+    }
+}
+
     async function loadOwnerFeedingEvents() {
     if (!refreshOwnerFeedingEventsButton || !ownerFeedingEventList) {
         return;
@@ -835,6 +985,90 @@ const feedingHistoryNavButton = document.querySelector('[data-view="feeding"]');
 if (feedingHistoryNavButton) {
     feedingHistoryNavButton.addEventListener('click', loadOwnerFeedingEvents);
 }
+
+// Populate the Activity Monitoring pet filter.
+async function loadOwnerActivityPetOptions() {
+    if (!ownerActivityPetFilter) return;
+
+    try {
+        const data = await apiRequest('/api/owner/pets');
+        const pets = Array.isArray(data.pets) ? data.pets : [];
+
+        const previousValue = ownerActivityPetFilter.value;
+
+        ownerActivityPetFilter.replaceChildren();
+
+        const allPetsOption = document.createElement('option');
+        allPetsOption.value = '';
+        allPetsOption.textContent = 'All my pets';
+        ownerActivityPetFilter.appendChild(allPetsOption);
+
+        pets.forEach((pet) => {
+            const option = document.createElement('option');
+            option.value = pet.id;
+            option.textContent = pet.name || 'Unnamed pet';
+            ownerActivityPetFilter.appendChild(option);
+        });
+
+        if (
+            previousValue &&
+            pets.some((pet) => pet.id === previousValue)
+        ) {
+            ownerActivityPetFilter.value = previousValue;
+        }
+
+        ownerActivityPetFilter.dataset.loaded = 'true';
+    } catch (error) {
+        console.error('Unable to load activity pet options:', error);
+
+        if (ownerActivitySummary) {
+            showMessage(
+                ownerActivitySummary,
+                'Unable to load your pet list. Please try again.',
+                'error'
+            );
+        }
+    }
+}
+
+// Load activity data when the owner opens Activity Monitoring.
+const ownerActivityNavButton = document.querySelector(
+    '[data-view="activity"]'
+);
+
+if (ownerActivityNavButton) {
+    ownerActivityNavButton.addEventListener('click', async () => {
+        if (ownerActivityPetFilter?.dataset.loaded !== 'true') {
+            await loadOwnerActivityPetOptions();
+        }
+
+        await loadOwnerActivityRecords();
+    });
+}
+
+// Refresh the activity history.
+if (refreshOwnerActivityButton) {
+    refreshOwnerActivityButton.addEventListener(
+        'click',
+        loadOwnerActivityRecords
+    );
+}
+
+// Apply the filters whenever their selections change.
+if (ownerActivityPetFilter) {
+    ownerActivityPetFilter.addEventListener(
+        'change',
+        loadOwnerActivityRecords
+    );
+}
+
+if (ownerActivityTypeFilter) {
+    ownerActivityTypeFilter.addEventListener(
+        'change',
+        loadOwnerActivityRecords
+    );
+}
+
 
 if (refreshOwnerFeedingEventsButton) {
     refreshOwnerFeedingEventsButton.addEventListener('click', loadOwnerFeedingEvents);

@@ -8,6 +8,7 @@
 
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/clinic-dashboard.css">
+    <script src="/js/jsQR.js" defer></script>
     <script src="/js/clinic-dashboard.js" defer></script>
 </head>
 <body>
@@ -30,7 +31,6 @@
 
     <aside class="clinic-sidebar">
                 <div class="sidebar-topbar">
-                    <span class="sidebar-brand-mark" aria-hidden="true">SV</span>
                     <button
                         type="button"
                         class="sidebar-toggle"
@@ -54,41 +54,47 @@
                 class="nav-item active"
                 data-view="overview"
                 aria-current="page">
-                <span class="nav-icon" aria-hidden="true">🖥️</span>
-                <span>Overview</span>
+                <span class="nav-icon" aria-hidden="true">🏠︎</span>
+                <span>Dashboard</span>
+            </button>
+
+            <button
+                type="button"
+                class="nav-item"
+                data-view="qrScanner">
+                <span class="nav-icon" aria-hidden="true">QR</span>
+                <span>Scan Pet QR</span>
             </button>
 
             <button
                 type="button"
                 class="nav-item"
                 data-view="pending">
-                <span class="nav-icon" aria-hidden="true">📝</span>
-                <span>Pending Registrations</span>
-                <span class="nav-count" id="sidebarPendingCount">—</span>
+                <span class="nav-icon" aria-hidden="true">⌛︎</span>
+                <span>Registration review</span>
             </button>
 
             <button
                 type="button"
                 class="nav-item"
                 data-view="vaccinations">
-                <span class="nav-icon" aria-hidden="true">💉</span>
-                <span>Vaccination Records</span>
+                <span class="nav-icon" aria-hidden="true">💊</span>
+                <span>Vaccination management</span>
             </button>
 
-            
             <button
                 type="button"
                 class="nav-item"
                 data-view="feedingEvents">
-                <span class="nav-icon" aria-hidden="true">🥗</span>
-                <span>Feeding History</span>
+                <span class="nav-icon" aria-hidden="true">𓌉◯𓇋</span>
+                <span>Feeding history</span>
             </button>
 
             <button
                 type="button"
                 class="nav-item"
                 data-view="devices">
-                <span class="nav-icon" aria-hidden="true">📡</span>
+                <span class="nav-icon" aria-hidden="true">📟</span>
                 <span>Device Management</span>
             </button>
 
@@ -106,32 +112,25 @@
                 <span class="theme-toggle-label">Dark mode</span>
             </button>
         </div>
-
-
-        <div class="sidebar-footer">
-            <span class="sidebar-status-dot"></span>
-            <div>
-                <strong>System connected</strong>
-                <p>VetCare</p>
-            </div>
-        </div>
     </aside>
 
     <main class="clinic-main">
 
+       
         <!-- OVERVIEW -->
         <section
             class="clinic-view is-active"
             id="overviewSection"
             data-page="overview">
 
+            <!-- Clinic welcome and session status -->
             <div class="page-heading">
                 <div>
                     <p class="page-eyebrow">CLINIC OVERVIEW</p>
                     <h1 id="welcomeHeading">Welcome, Staff</h1>
                     <p class="muted">
-                        Review registrations and keep pet vaccination
-                        information organized in one place.
+                        Monitor pet registrations, vaccination schedules,
+                        and recent clinic activity in one place.
                     </p>
                 </div>
 
@@ -148,32 +147,78 @@
                 Checking your session...
             </p>
 
+            <!-- Summary cards: existing Claymorphism classes are retained -->
             <div class="overview-stats">
                 <article class="stat-card">
-                    <span class="stat-label">Pending registrations</span>
+                    <span class="stat-label">Registered Pets</span>
+                    <strong id="registeredPetsCount">—</strong>
+                    <span class="stat-description">
+                        Total pet records in SmartVet
+                    </span>
+                </article>
+
+                <article class="stat-card">
+                    <span class="stat-label">Pending Review</span>
                     <strong id="pendingCount">—</strong>
                     <span class="stat-description">
-                        Awaiting veterinary review
+                        Awaiting registration review
                     </span>
                 </article>
 
                 <article class="stat-card">
-                    <span class="stat-label">Approved pets</span>
-                    <strong id="approvedCount">—</strong>
+                    <span class="stat-label">Overdue Vaccines</span>
+                    <strong id="overdueVaccineCount">—</strong>
                     <span class="stat-description">
-                        Available for record access
+                        Past their recorded due date
                     </span>
                 </article>
 
                 <article class="stat-card">
-                    <span class="stat-label">Clinical tools</span>
-                    <strong class="stat-word">Available</strong>
+                    <span class="stat-label">Due Within 30 Days</span>
+                    <strong id="dueSoonVaccineCount">—</strong>
                     <span class="stat-description">
-                        QR identification and vaccination records
+                        Upcoming recorded vaccinations
                     </span>
                 </article>
             </div>
 
+            <!-- Preserve compatibility with existing dashboard JavaScript -->
+            <span id="approvedCount" hidden>—</span>
+
+            <!-- Vaccination attention list -->
+            <section class="workspace-panel history-section">
+                <div class="section-heading">
+                    <div>
+                        <h2>Vaccination Attention List</h2>
+                        <p class="muted">
+                            Review overdue and upcoming vaccination dates.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="skeleton-table-wrap">
+                    <table class="skeleton-table">
+                        <thead>
+                            <tr>
+                                <th>Pet / Patient ID</th>
+                                <th>Vaccine</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="vaccinationAttentionTableBody">
+                            <tr>
+                                <td colspan="4" class="muted">
+                                    Vaccination attention records will appear here.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Keep the existing quick actions -->
             <section class="workspace-panel">
                 <div class="section-heading">
                     <div>
@@ -189,7 +234,7 @@
                         type="button"
                         class="quick-action"
                         data-view-target="pending">
-                        <span class="quick-action-icon">▤</span>
+                        <span class="quick-action-icon" aria-hidden="true">▤</span>
                         <span>
                             <strong>Review Registrations</strong>
                             <small>
@@ -203,7 +248,7 @@
                         type="button"
                         class="quick-action"
                         data-view-target="vaccinations">
-                        <span class="quick-action-icon">✚</span>
+                        <span class="quick-action-icon" aria-hidden="true">✚</span>
                         <span>
                             <strong>Vaccination Records</strong>
                             <small>
@@ -214,7 +259,311 @@
                     </button>
                 </div>
             </section>
+
         </section>
+
+        <!-- QR PET IDENTIFICATION -->
+        <section
+            class="clinic-view"
+            id="qrScannerSection"
+            data-page="qrScanner"
+            hidden>
+
+            <div class="page-heading">
+                <div>
+                    <p class="page-eyebrow">PET IDENTIFICATION</p>
+                    <h1>Scan Pet QR</h1>
+                    <p class="muted">
+                        Scan an approved pet's QR code to view its registered
+                        information, owner details, and vaccination records.
+                    </p>
+                </div>
+            </div>
+
+            <section class="workspace-panel">
+                <div class="section-heading">
+                    <div>
+                        <h2>QR Code Scanner</h2>
+                        <p class="muted">
+                            Camera scanning will start automatically when this
+                            workspace opens.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="qrScannerStatus" class="message" role="status" aria-live="polite">
+                    Preparing camera scanner...
+                </div>
+
+                <div id="qrCameraContainer" class="qr-camera-container">
+                    <video
+                        id="qrCameraVideo"
+                        autoplay
+                        muted
+                        playsinline
+                        aria-label="Camera preview for scanning pet QR codes">
+                    </video>
+
+                    <canvas id="qrScannerCanvas" hidden></canvas>
+                </div>
+
+                <p class="muted">
+                    Allow camera access when prompted. Point the camera at an
+                    approved pet's QR code. SmartVet will process it automatically.
+                </p>
+
+                <button
+                    type="button"
+                    class="secondary"
+                    id="qrScanAnotherButton"
+                    hidden>
+                    Scan Another Pet
+                </button>
+            </section>
+
+            <!-- The pet profile appears after a successful scan. -->
+            <section
+                class="workspace-panel"
+                id="qrPetProfilePanel"
+                hidden>
+
+                <div class="section-heading">
+                    <div>
+                        <p class="page-eyebrow">IDENTIFICATION RESULT</p>
+                        <h2>Pet Information</h2>
+                    </div>
+
+                    <span id="qrPetStatusBadge" class="session-badge">
+                        Approved
+                    </span>
+                </div>
+
+                <div class="qr-pet-profile">
+                    <div class="qr-pet-photo-container">
+                        <img
+                            id="qrPetPhoto"
+                            class="qr-pet-photo"
+                            alt="Registered pet"
+                            hidden>
+
+                        <div id="qrPetPhotoPlaceholder" class="qr-photo-placeholder">
+                            Pet photo unavailable
+                        </div>
+                    </div>
+
+                    <div class="qr-pet-details">
+                        <h2 id="qrPetName">Pet name</h2>
+                        <p id="qrPetCode" class="muted">Official Pet ID</p>
+
+                        <dl class="qr-details-grid">
+                            <div>
+                                <dt>Species</dt>
+                                <dd id="qrPetSpecies">—</dd>
+                            </div>
+                            <div>
+                                <dt>Breed</dt>
+                                <dd id="qrPetBreed">—</dd>
+                            </div>
+                            <div>
+                                <dt>Sex</dt>
+                                <dd id="qrPetSex">—</dd>
+                            </div>
+                            <div>
+                                <dt>Date of Birth</dt>
+                                <dd id="qrPetDateOfBirth">—</dd>
+                            </div>
+                            <div>
+                                <dt>Color</dt>
+                                <dd id="qrPetColor">—</dd>
+                            </div>
+                            <div>
+                                <dt>Pet Owner</dt>
+                                <dd id="qrPetOwnerName">—</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="qr-pet-actions">
+                    <button type="button" id="qrOwnerDetailsButton">
+                        View Owner Details
+                    </button>
+
+                    <button type="button" id="qrAddVaccinationButton">
+                        Add Vaccination Record
+                    </button>
+
+                    <button type="button" id="qrVaccinationHistoryButton" class="secondary">
+                        Vaccination History
+                    </button>
+                </div>
+            </section>
+        </section>
+
+        <!-- OWNER INFORMATION MODAL -->
+        <dialog id="qrOwnerDetailsDialog" class="smartvet-modal">
+            <div class="smartvet-modal-header">
+                <div>
+                    <p class="page-eyebrow">PET OWNER</p>
+                    <h2>Owner Information</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="secondary"
+                    data-close-dialog="qrOwnerDetailsDialog"
+                    aria-label="Close owner information">
+                    Close
+                </button>
+            </div>
+
+            <div class="qr-owner-profile">
+                <img id="qrOwnerPhoto" alt="Pet owner profile photo" hidden>
+
+                <div id="qrOwnerPhotoPlaceholder" class="qr-photo-placeholder">
+                    Owner photo not registered
+                </div>
+
+                <div>
+                    <h3 id="qrOwnerName">—</h3>
+                    <p id="qrOwnerEmail" class="muted">Email: —</p>
+                    <p id="qrOwnerPhone" class="muted">Phone: —</p>
+                </div>
+            </div>
+
+            <p class="muted">
+                Only owner information stored in SmartVet will be displayed here.
+            </p>
+        </dialog>
+
+        <!-- ADD VACCINATION RECORD MODAL -->
+        <dialog id="qrVaccinationRecordDialog" class="smartvet-modal">
+            <div class="smartvet-modal-header">
+                <div>
+                    <p class="page-eyebrow">CLINICAL RECORD</p>
+                    <h2>Add Vaccination Record</h2>
+                    <p id="qrVaccinationPetName" class="muted">Selected pet: —</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="secondary"
+                    data-close-dialog="qrVaccinationRecordDialog"
+                    aria-label="Close vaccination form">
+                    Close
+                </button>
+            </div>
+
+            <form id="qrVaccinationForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="qrVaccineName">Vaccine Name *</label>
+                        <input
+                            id="qrVaccineName"
+                            name="vaccineName"
+                            type="text"
+                            minlength="2"
+                            maxlength="150"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="qrAdministeredDate">Administration Date *</label>
+                        <input
+                            id="qrAdministeredDate"
+                            name="administeredDate"
+                            type="date"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="qrNextDueDate">Next Due Date</label>
+                        <input
+                            id="qrNextDueDate"
+                            name="nextDueDate"
+                            type="date">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="qrBatchNumber">Batch Number</label>
+                        <input
+                            id="qrBatchNumber"
+                            name="batchNumber"
+                            type="text"
+                            maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="qrManufacturer">Manufacturer</label>
+                        <input
+                            id="qrManufacturer"
+                            name="manufacturer"
+                            type="text"
+                            maxlength="150">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="qrDosage">Dosage</label>
+                        <input
+                            id="qrDosage"
+                            name="dosage"
+                            type="text"
+                            maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="qrVaccinationNotes">Notes</label>
+                        <textarea
+                            id="qrVaccinationNotes"
+                            name="notes"
+                            maxlength="2000"
+                            rows="3">
+                        </textarea>
+                    </div>
+                </div>
+
+                <p
+                    id="qrVaccinationMessage"
+                    class="message"
+                    role="status"
+                    aria-live="polite">
+                </p>
+
+                <div class="form-actions">
+                    <button type="submit" id="qrSaveVaccinationButton">
+                        Save Vaccination
+                    </button>
+                </div>
+            </form>
+        </dialog>
+
+        <!-- VACCINATION HISTORY MODAL -->
+        <dialog id="qrVaccinationHistoryDialog" class="smartvet-modal">
+            <div class="smartvet-modal-header">
+                <div>
+                    <p class="page-eyebrow">CLINICAL RECORD</p>
+                    <h2>Vaccination History</h2>
+                    <p id="qrHistoryPetName" class="muted">Selected pet: —</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="secondary"
+                    data-close-dialog="qrVaccinationHistoryDialog"
+                    aria-label="Close vaccination history">
+                    Close
+                </button>
+            </div>
+
+            <div
+                id="qrVaccinationHistoryList"
+                aria-live="polite"
+                aria-busy="false">
+                <p class="muted">
+                    Vaccination history will load when this modal opens.
+                </p>
+            </div>
+        </dialog>
 
         <!-- PENDING REGISTRATIONS -->
         <section

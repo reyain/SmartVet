@@ -9,6 +9,11 @@ const logoutButton = document.getElementById('logoutButton');
 const sessionBadge = document.getElementById('sessionBadge');
 const pendingCount = document.getElementById('pendingCount');
 const approvedCount = document.getElementById('approvedCount');
+
+const registeredPetsCount = document.getElementById('registeredPetsCount');
+const overdueVaccineCount = document.getElementById('overdueVaccineCount');
+const dueSoonVaccineCount = document.getElementById('dueSoonVaccineCount');
+
 const sidebarPendingCount = document.getElementById('sidebarPendingCount');
 
 const approvalResultContainer = document.getElementById(
@@ -24,6 +29,7 @@ const vaccinationHistory = document.getElementById('vaccinationHistory');
 const feedingStatusFilter = document.getElementById('feedingStatusFilter');
 const refreshFeedingEventsButton = document.getElementById('refreshFeedingEventsButton');
 const feedingEventsHistory = document.getElementById('feedingEventsHistory');
+
 
 // Device Management elements
 const deviceRegistrationForm = document.getElementById('deviceRegistrationForm');
@@ -41,6 +47,32 @@ const copyDeviceTokenButton = document.getElementById('copyDeviceTokenButton');
 
 const refreshDevicesButton = document.getElementById('refreshDevicesButton');
 const devicesList = document.getElementById('devicesList');
+
+// QR Pet Identification elements
+const qrCameraVideo = document.getElementById('qrCameraVideo');
+const qrScannerCanvas = document.getElementById('qrScannerCanvas');
+const qrScannerStatus = document.getElementById('qrScannerStatus');
+const qrScanAnotherButton = document.getElementById('qrScanAnotherButton');
+
+const qrPetProfilePanel = document.getElementById('qrPetProfilePanel');
+const qrPetPhoto = document.getElementById('qrPetPhoto');
+const qrPetPhotoPlaceholder = document.getElementById('qrPetPhotoPlaceholder');
+const qrPetName = document.getElementById('qrPetName');
+const qrPetCode = document.getElementById('qrPetCode');
+const qrPetSpecies = document.getElementById('qrPetSpecies');
+const qrPetBreed = document.getElementById('qrPetBreed');
+const qrPetSex = document.getElementById('qrPetSex');
+const qrPetDateOfBirth = document.getElementById('qrPetDateOfBirth');
+const qrPetColor = document.getElementById('qrPetColor');
+const qrPetOwnerName = document.getElementById('qrPetOwnerName');
+const qrPetStatusBadge = document.getElementById('qrPetStatusBadge');
+
+let qrCameraStream = null;
+let qrAnimationFrameId = null;
+let qrScanBusy = false;
+let currentQrPet = null;
+let qrPetPhotoObjectUrl = null;
+
 const deviceManagementMessage = document.getElementById('deviceManagementMessage');
 
 const refreshApprovedPetsButton = document.getElementById(
@@ -62,6 +94,7 @@ const views = {
     pending: document.getElementById('pendingSection'),
     vaccinations: document.getElementById('vaccinationSection'),
     feedingEvents: document.getElementById('feedingEventsSection'),
+    qrScanner: document.getElementById('qrScannerSection'),
     devices: document.getElementById('devicesSection')
 };
 
@@ -247,6 +280,14 @@ function switchView(viewName) {
     // Load the appropriate records when opening a section.
     if (!dashboardReady) return;
 
+    // Start the scanner when its workspace opens.
+    // Stop the camera when the user leaves the workspace.
+    if (viewName === 'qrScanner') {
+        startQrScanner();
+    } else {
+        stopQrScanner();
+    }
+
     if (viewName === 'pending') {
         loadPendingPets();
     }
@@ -262,6 +303,7 @@ function switchView(viewName) {
     if (viewName === 'feedingEvents') {
     loadFeedingEvents();
 }
+
 
 if (viewName === 'devices') {
     populateDevicePetOptions();
@@ -286,12 +328,43 @@ quickActionButtons.forEach((button) => {
 /* Overview statistics */
 
 function updatePendingCount(count) {
-    pendingCount.textContent = String(count);
-    sidebarPendingCount.textContent = String(count);
+    if (pendingCount) {
+        pendingCount.textContent = String(count);
+    }
+
+    if (sidebarPendingCount) {
+        sidebarPendingCount.textContent = String(count);
+    }
 }
 
 function updateApprovedCount(count) {
     approvedCount.textContent = String(count);
+}
+
+async function loadDashboardOverview() {
+    if (!dashboardReady) return;
+
+    try {
+        const data = await apiRequest('/api/clinic/dashboard-overview');
+
+        if (!data || !data.summary) {
+            throw new Error('The dashboard overview data is unavailable.');
+        }
+
+        registeredPetsCount.textContent =
+            String(data.summary.registeredPets ?? 0);
+
+        pendingCount.textContent =
+            String(data.summary.pendingReview ?? 0);
+
+        overdueVaccineCount.textContent =
+            String(data.summary.overdueVaccines ?? 0);
+
+        dueSoonVaccineCount.textContent =
+            String(data.summary.dueSoonVaccines ?? 0);
+    } catch (error) {
+        console.error('Unable to load clinic dashboard overview:', error);
+    }
 }
 
 /* Pending registrations */
@@ -1429,6 +1502,286 @@ async function loadFeedingEvents() {
     }
 }
 
+// Automatically start the camera when Scan Pet QR opens.
+async function startQrScanner() {
+    if (!qrCameraVideo || !qrScannerCanvas) return;
+    if (qrCameraStream) return;
+
+    qrScanBusy = false;
+    currentQrPet = null;
+
+    if (qrPetProfilePanel) {
+        qrPetProfilePanel.hidden = true;
+    }
+
+    if (qrScanAnotherButton) {
+        qrScanAnotherButton.hidden = true;
+    }
+
+    if (qrPetPhotoObjectUrl) {
+        URL.revokeObjectURL(qrPetPhotoObjectUrl);
+        qrPetPhotoObjectUrl = null;
+    }
+
+    if (qrPetPhoto) {
+        qrPetPhoto.removeAttribute('src');
+        qrPetPhoto.hidden = true;
+    }
+
+    if (qrPetPhotoPlaceholder) {
+        qrPetPhotoPlaceholder.hidden = false;
+    }
+
+    if (qrScannerStatus) {
+        showMessage(qrScannerStatus, 'Requesting camera access...');
+    }
+
+    try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error(
+                'Camera access is unavailable. Open SmartVet through localhost or HTTPS.'
+            );
+        }
+
+        if (typeof jsQR !== 'function') {
+            throw new Error('The QR decoder failed to load. Refresh the page and try again.');
+        }
+
+        qrCameraStream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+                facingMode: { ideal: 'environment' }
+            }
+        });
+
+        qrCameraVideo.srcObject = qrCameraStream;
+        await qrCameraVideo.play();
+
+        if (qrScannerStatus) {
+            showMessage(
+                qrScannerStatus,
+                'Camera active. Point it at an approved SmartVet pet QR code.'
+            );
+        }
+
+        scanQrCameraFrame();
+    } catch (error) {
+        stopQrScanner();
+
+        if (qrScannerStatus) {
+            showMessage(
+                qrScannerStatus,
+                error.name === 'NotAllowedError'
+                    ? 'Camera permission was denied. Allow camera access in your browser settings and try again.'
+                    : error.message || 'Unable to start the camera.',
+                'error'
+            );
+        }
+
+        if (qrScanAnotherButton) {
+            qrScanAnotherButton.hidden = false;
+        }
+    }
+}
+
+// Continuously decode frames from the camera.
+function scanQrCameraFrame() {
+    if (
+        !qrCameraStream ||
+        qrScanBusy ||
+        !qrCameraVideo ||
+        qrCameraVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA
+    ) {
+        if (qrCameraStream && !qrScanBusy) {
+            qrAnimationFrameId = requestAnimationFrame(scanQrCameraFrame);
+        }
+        return;
+    }
+
+    const width = qrCameraVideo.videoWidth;
+    const height = qrCameraVideo.videoHeight;
+
+    if (!width || !height) {
+        qrAnimationFrameId = requestAnimationFrame(scanQrCameraFrame);
+        return;
+    }
+
+    const canvas = qrScannerCanvas;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+
+    canvas.width = width;
+    canvas.height = height;
+
+    context.drawImage(qrCameraVideo, 0, 0, width, height);
+
+    const imageData = context.getImageData(0, 0, width, height);
+
+    const result = jsQR(
+        imageData.data,
+        imageData.width,
+        imageData.height,
+        { inversionAttempts: 'dontInvert' }
+    );
+
+    if (result?.data) {
+        qrScanBusy = true;
+        stopQrScanner();
+        handleScannedPetQr(result.data);
+        return;
+    }
+
+    qrAnimationFrameId = requestAnimationFrame(scanQrCameraFrame);
+}
+
+// Retrieve the pet only after the backend validates its QR identifier.
+async function handleScannedPetQr(identifier) {
+    if (!/^[a-fA-F0-9]{64}$/.test(identifier)) {
+        if (qrScannerStatus) {
+            showMessage(
+                qrScannerStatus,
+                'This is not a valid SmartVet pet QR code.',
+                'error'
+            );
+        }
+
+        if (qrScanAnotherButton) {
+            qrScanAnotherButton.hidden = false;
+        }
+
+        return;
+    }
+
+    if (qrScannerStatus) {
+        showMessage(qrScannerStatus, 'QR code recognized. Looking up the pet...');
+    }
+
+    try {
+        const data = await apiRequest(
+            `/api/clinic/pets/qr/${encodeURIComponent(identifier)}`
+        );
+
+        if (!data.success || !data.pet) {
+            throw new Error('No approved pet was found for this QR code.');
+        }
+
+        currentQrPet = data.pet;
+        displayScannedPet(data.pet);
+
+        if (qrScannerStatus) {
+            showMessage(
+                qrScannerStatus,
+                `Pet identified successfully: ${data.pet.name}`
+            );
+        }
+
+        if (qrScanAnotherButton) {
+            qrScanAnotherButton.hidden = false;
+        }
+    } catch (error) {
+        if (qrScannerStatus) {
+            showMessage(
+                qrScannerStatus,
+                error.message || 'Unable to retrieve the pet record.',
+                'error'
+            );
+        }
+
+        if (qrScanAnotherButton) {
+            qrScanAnotherButton.hidden = false;
+        }
+    } finally {
+        qrScanBusy = false;
+    }
+}
+
+// Display the pet details returned by the authenticated clinic API.
+function displayScannedPet(pet) {
+    if (!qrPetProfilePanel) return;
+
+    qrPetName.textContent = pet.name || 'Unnamed pet';
+    qrPetCode.textContent = `Official Pet ID: ${pet.petCode || 'Unavailable'}`;
+    qrPetSpecies.textContent = pet.species || 'Not specified';
+    qrPetBreed.textContent = pet.breed || 'Not specified';
+    qrPetSex.textContent = pet.sex || 'Unknown';
+    qrPetColor.textContent = pet.color || 'Not specified';
+    qrPetOwnerName.textContent = pet.owner?.fullName || 'Owner unavailable';
+
+    qrPetDateOfBirth.textContent = pet.dateOfBirth
+        ? new Date(pet.dateOfBirth).toLocaleDateString()
+        : 'Not provided';
+
+    qrPetStatusBadge.textContent = pet.registrationStatus || 'Unknown';
+
+    qrPetProfilePanel.hidden = false;
+
+    if (pet.id && pet.photoEndpoint) {
+        loadScannedPetPhoto(pet.id);
+    } else {
+        qrPetPhoto.hidden = true;
+        qrPetPhoto.removeAttribute('src');
+        qrPetPhotoPlaceholder.hidden = false;
+    }
+}
+
+// Load the pet photograph through the protected clinic photo endpoint.
+async function loadScannedPetPhoto(petId) {
+    try {
+        const response = await fetch(
+            `/api/clinic/pets/${encodeURIComponent(petId)}/photo`,
+            {
+                headers: {
+                    Authorization: `Bearer ${getToken()}`,
+                    Accept: 'image/jpeg, image/png, image/webp'
+                },
+                cache: 'no-store'
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error('Pet photo unavailable.');
+        }
+
+        const imageBlob = await response.blob();
+
+        if (qrPetPhotoObjectUrl) {
+            URL.revokeObjectURL(qrPetPhotoObjectUrl);
+        }
+
+        qrPetPhotoObjectUrl = URL.createObjectURL(imageBlob);
+        qrPetPhoto.src = qrPetPhotoObjectUrl;
+        qrPetPhoto.hidden = false;
+        qrPetPhotoPlaceholder.hidden = true;
+    } catch {
+        qrPetPhoto.removeAttribute('src');
+        qrPetPhoto.hidden = true;
+        qrPetPhotoPlaceholder.hidden = false;
+    }
+}
+
+// Stop the camera and release its hardware tracks.
+function stopQrScanner() {
+    if (qrAnimationFrameId !== null) {
+        cancelAnimationFrame(qrAnimationFrameId);
+        qrAnimationFrameId = null;
+    }
+
+    if (qrCameraStream) {
+        qrCameraStream.getTracks().forEach((track) => track.stop());
+        qrCameraStream = null;
+    }
+
+    if (qrCameraVideo) {
+        qrCameraVideo.pause();
+        qrCameraVideo.srcObject = null;
+    }
+}
+
+// Allow the user to scan another pet without a Start button.
+if (qrScanAnotherButton) {
+    qrScanAnotherButton.addEventListener('click', () => {
+        startQrScanner();
+    });
+}
 
 
 async function verifyVeterinarySession() {
@@ -1462,7 +1815,8 @@ async function verifyVeterinarySession() {
 
         await Promise.all([
             loadPendingPets(),
-            loadApprovedPets()
+            loadApprovedPets(),
+            loadDashboardOverview()
         ]);
     } catch (error) {
         showMessage(
@@ -1486,6 +1840,7 @@ if (feedingStatusFilter) {
 if (refreshFeedingEventsButton) {
     refreshFeedingEventsButton.addEventListener('click', loadFeedingEvents);
 }
+
 
 if (refreshDevicesButton) {
     refreshDevicesButton.addEventListener('click', loadDevices);

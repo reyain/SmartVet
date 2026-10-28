@@ -14,6 +14,7 @@ const VaccinationRecord = require('../models/VaccinationRecord');
 const Notification = require('../models/Notification');
 
 const FeedingEvent = require('../models/FeedingEvent');
+const ActivityRecord = require('../models/ActivityRecord');
 
 const {
     requireAuth,
@@ -654,6 +655,106 @@ router.get('/feeding-events', async (req, res, next) => {
             success: true,
             count: events.length,
             events
+        });
+    } catch (error) {
+        return next(error);
+    }
+});
+
+// GET /api/owner/activity-records
+// Owners can view activity records only for their own pets.
+router.get('/activity-records', async (req, res, next) => {
+    try {
+        const allowedActivities = [
+            'walking',
+            'running',
+            'resting',
+            'sleeping',
+            'inactive',
+            'unknown'
+        ];
+
+        const { petId, activity } = req.query;
+
+        if (petId && !mongoose.isValidObjectId(petId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid pet ID.'
+            });
+        }
+
+        if (activity && !allowedActivities.includes(activity)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid activity classification.'
+            });
+        }
+
+        // Find only pets owned by the authenticated owner.
+        const ownedPets = await Pet.find({
+            ownerUserId: req.user.id
+        })
+            .select('_id')
+            .lean();
+
+        const ownedPetIds = ownedPets.map((pet) => pet._id);
+
+        if (petId) {
+            const ownsPet = ownedPetIds.some(
+                (id) => id.toString() === petId
+            );
+
+            if (!ownsPet) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Pet not found.'
+                });
+            }
+        }
+
+        const filter = {
+            petId: petId
+                ? new mongoose.Types.ObjectId(petId)
+                : { $in: ownedPetIds }
+        };
+
+        if (activity) {
+            filter.activity = activity;
+        }
+
+        const records = await ActivityRecord.find(filter)
+            .populate('petId', 'name species petCode')
+            .populate('deviceId', 'deviceCode deviceType')
+            .sort({ measuredAt: -1 })
+            .limit(200)
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            count: records.length,
+            records: records.map((record) => ({
+                id: record._id.toString(),
+                pet: record.petId
+                    ? {
+                        id: record.petId._id.toString(),
+                        name: record.petId.name,
+                        species: record.petId.species,
+                        petCode: record.petId.petCode || null
+                    }
+                    : null,
+                device: record.deviceId
+                    ? {
+                        id: record.deviceId._id.toString(),
+                        deviceCode: record.deviceId.deviceCode,
+                        deviceType: record.deviceId.deviceType
+                    }
+                    : null,
+                activity: record.activity,
+                measuredAt: record.measuredAt,
+                durationSeconds: record.durationSeconds ?? null,
+                sensorSummary: record.sensorSummary ?? null,
+                createdAt: record.createdAt
+            }))
         });
     } catch (error) {
         return next(error);

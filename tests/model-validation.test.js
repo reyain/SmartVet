@@ -156,6 +156,16 @@ expectValid(
     ActivityRecord,
     validActivityRecord
 );
+
+expectValid(
+    'ActivityRecord accepts sleeping activity',
+    ActivityRecord,
+    {
+        ...validActivityRecord,
+        activity: 'sleeping'
+    }
+);
+
 expectValid('Device accepts valid data', Device, validDevice);
 expectValid(
     'Notification accepts valid data',

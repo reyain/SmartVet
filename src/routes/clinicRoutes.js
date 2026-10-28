@@ -8,7 +8,7 @@ const path = require('path');
 
 const Pet = require('../models/Pet');
 const VaccinationRecord = require('../models/VaccinationRecord');
-const ActivityRecord = require('../models/ActivityRecord');
+const AuditLog = require('../models/AuditLog');
 
 const {
     requireAuth,
@@ -92,80 +92,186 @@ router.get('/', (req, res) => {
     });
 });
 
-// GET /api/clinic/activity-records
-// Retrieve recent activity readings reported by SmartVet collars.
-router.get('/activity-records', async (req, res, next) => {
+
+// GET /api/clinic/dashboard-overview
+// Provide real database data for the clinic dashboard overview.
+router.get('/dashboard-overview', async (req, res, next) => {
     try {
-        const { petId, activity } = req.query;
+        // Calculate calendar boundaries using Philippine time.
+        const dateParts = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Asia/Manila',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).formatToParts(new Date());
 
-        // Validate an optional pet ID filter.
-        if (petId && !mongoose.isValidObjectId(petId)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid pet ID.'
-            });
-        }
+        const datePart = (type) =>
+            dateParts.find((part) => part.type === type).value;
 
-        // Validate an optional activity filter.
-        const allowedActivities = [
-            'walking',
-            'running',
-            'resting',
-            'inactive',
-            'unknown'
+        const today = new Date(
+            `${datePart('year')}-${datePart('month')}-${datePart('day')}T00:00:00+08:00`
+        );
+
+        // Includes today and the next 30 calendar days.
+        const dueSoonEnd = new Date(
+            today.getTime() + 31 * 24 * 60 * 60 * 1000
+        );
+
+        // Only consider the latest vaccination record for each pet and
+        // vaccine, so historical doses do not create duplicate alerts.
+        const latestVaccinationStages = [
+            {
+                $sort: {
+                    administeredDate: -1,
+                    createdAt: -1
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        petId: '$petId',
+                        vaccineName: {
+                            $toLower: '$vaccineName'
+                        }
+                    },
+                    record: { $first: '$$ROOT' }
+                }
+            },
+            {
+                $replaceRoot: {
+                    newRoot: '$record'
+                }
+            }
         ];
 
-        if (activity && !allowedActivities.includes(activity)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid activity classification.'
-            });
-        }
+        const overdueMatch = {
+            nextDueDate: { $lt: today }
+        };
 
-        const filter = {};
+        const dueSoonMatch = {
+            nextDueDate: {
+                $gte: today,
+                $lt: dueSoonEnd
+            }
+        };
 
-        if (petId) {
-            filter.petId = petId;
-        }
+        const [
+            registeredPets,
+            pendingReview,
+            overdueCount,
+            dueSoonCount,
+            attentionRecords,
+            recentLogs
+        ] = await Promise.all([
+            Pet.countDocuments({}),
 
-        if (activity) {
-            filter.activity = activity;
-        }
+            Pet.countDocuments({
+                registrationStatus: {
+                    $in: ['pending', 'needs_verification']
+                }
+            }),
 
-        const records = await ActivityRecord.find(filter)
-            .populate('petId', 'name petCode species')
-            .populate('deviceId', 'deviceCode deviceType status')
-            .sort({ measuredAt: -1 })
-            .limit(100)
-            .lean();
+            VaccinationRecord.aggregate([
+                ...latestVaccinationStages,
+                { $match: overdueMatch },
+                { $count: 'count' }
+            ]),
+
+            VaccinationRecord.aggregate([
+                ...latestVaccinationStages,
+                { $match: dueSoonMatch },
+                { $count: 'count' }
+            ]),
+
+            VaccinationRecord.aggregate([
+                ...latestVaccinationStages,
+                {
+                    $match: {
+                        $or: [
+                            overdueMatch,
+                            dueSoonMatch
+                        ]
+                    }
+                },
+                { $sort: { nextDueDate: 1 } },
+                { $limit: 10 }
+            ]),
+
+            AuditLog.find({})
+                .populate('actorUserId', 'fullName')
+                .sort({ createdAt: -1 })
+                .limit(10)
+                .lean()
+        ]);
+
+        const attentionPetIds = [
+            ...new Set(
+                attentionRecords.map((record) =>
+                    record.petId.toString()
+                )
+            )
+        ];
+
+        const attentionPets = attentionPetIds.length
+            ? await Pet.find({
+                _id: { $in: attentionPetIds }
+            })
+                .select('name petCode species registrationStatus')
+                .lean()
+            : [];
+
+        const petById = new Map(
+            attentionPets.map((pet) => [
+                pet._id.toString(),
+                pet
+            ])
+        );
+
+        const vaccinationAttention = attentionRecords.map((record) => {
+            const pet = petById.get(record.petId.toString());
+            const overdue = record.nextDueDate < today;
+
+            return {
+                id: record._id.toString(),
+                pet: pet
+                    ? {
+                        id: pet._id.toString(),
+                        name: pet.name,
+                        petCode: pet.petCode || null,
+                        species: pet.species
+                    }
+                    : null,
+                vaccineName: record.vaccineName,
+                nextDueDate: record.nextDueDate,
+                status: overdue ? 'overdue' : 'due_soon'
+            };
+        });
+
+        const recentActivity = recentLogs.map((log) => ({
+            id: log._id.toString(),
+            date: log.createdAt,
+            action: log.action,
+            source: log.source,
+            details: log.summary,
+            staffName: log.actorUserId
+                ? log.actorUserId.fullName
+                : log.source === 'device'
+                    ? 'IoT Device'
+                    : log.source === 'system'
+                        ? 'System'
+                        : 'Unknown'
+        }));
 
         return res.status(200).json({
             success: true,
-            count: records.length,
-            records: records.map((record) => ({
-                id: record._id.toString(),
-                pet: record.petId
-                    ? {
-                        id: record.petId._id.toString(),
-                        name: record.petId.name,
-                        petCode: record.petId.petCode,
-                        species: record.petId.species
-                    }
-                    : null,
-                device: record.deviceId
-                    ? {
-                        id: record.deviceId._id.toString(),
-                        deviceCode: record.deviceId.deviceCode,
-                        deviceType: record.deviceId.deviceType,
-                        status: record.deviceId.status
-                    }
-                    : null,
-                activity: record.activity,
-                measuredAt: record.measuredAt,
-                durationSeconds: record.durationSeconds ?? null,
-                sensorSummary: record.sensorSummary ?? null,
-                createdAt: record.createdAt
-            }))
+            summary: {
+                registeredPets,
+                pendingReview,
+                overdueVaccines: overdueCount[0]?.count || 0,
+                dueSoonVaccines: dueSoonCount[0]?.count || 0
+            },
+            vaccinationAttention,
+            recentActivity
         });
     } catch (error) {
         return next(error);
@@ -470,6 +576,10 @@ router.get('/pets/qr/:identifier', async (req, res, next) => {
             registrationStatus: 'approved'
         })
             .select(
+                'petCode name species breed sex dateOfBirth color registrationStatus verifiedAt ownerUserId photoFilename photoContentType'
+            )
+            .populate('ownerUserId', 'fullName email phone')
+            .select(
                 'petCode name species breed sex dateOfBirth color registrationStatus verifiedAt'
             )
             .lean();
@@ -493,7 +603,27 @@ router.get('/pets/qr/:identifier', async (req, res, next) => {
                 dateOfBirth: pet.dateOfBirth || null,
                 color: pet.color,
                 registrationStatus: pet.registrationStatus,
-                verifiedAt: pet.verifiedAt || null
+                verifiedAt: pet.verifiedAt || null,
+
+                // Do not expose the stored photo filename.
+                hasPhoto: Boolean(
+                    pet.photoFilename && pet.photoContentType
+                ),
+
+                // This endpoint remains protected by veterinary authentication.
+                photoEndpoint:
+                    pet.photoFilename && pet.photoContentType
+                        ? `/api/clinic/pets/${pet._id.toString()}/photo`
+                        : null,
+
+                owner: pet.ownerUserId
+                    ? {
+                        id: pet.ownerUserId._id.toString(),
+                        fullName: pet.ownerUserId.fullName,
+                        email: pet.ownerUserId.email,
+                        phone: pet.ownerUserId.phone || ''
+                    }
+                    : null
             }
         });
     } catch (error) {

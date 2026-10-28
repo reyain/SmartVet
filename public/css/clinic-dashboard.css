@@ -333,8 +333,16 @@ main.clinic-main {
 }
 
 .session-badge.is-verified {
-    background: rgba(16, 185, 129, 0.15);
-    color: var(--clay-green-dark);
+    background: rgba(16, 185, 129, 0.18);
+    color: var(--clay-green-dark, #07543f);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* Dark mode override to keep it vibrant and readable against dark backgrounds */
+body[data-theme="dark"] .session-badge.is-verified {
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+    border-color: #27804b;
 }
 
 /* Overview Stat Cards (Claymorphic chunks) */
@@ -1569,4 +1577,68 @@ body[data-theme="dark"] #devicesSection .device-status-revoked {
     #devicesSection .device-list-item {
         transition: none;
     }
+}
+
+/* ==========================================
+   ACTIVITY MONITORING
+========================================== */
+
+.activity-records-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 16px;
+    margin-top: 20px;
+    min-height: 80px;
+}
+
+.activity-records-list > .muted,
+.activity-records-list > .message {
+    grid-column: 1 / -1;
+    margin: 12px 0;
+}
+
+.activity-record-card {
+    padding: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    background: var(--clay-surface-card);
+    box-shadow: var(--clay-shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    min-width: 0;
+}
+
+.activity-record-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--clay-shadow);
+}
+
+.activity-record-card h3 {
+    margin: 0 0 12px;
+    color: var(--clay-heading);
+    font-size: 1.05rem;
+    overflow-wrap: anywhere;
+}
+
+.activity-record-card p {
+    margin: 6px 0;
+    color: var(--clay-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+    .activity-records-list {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .activity-record-card {
+        padding: 16px;
+    }
+}
+
+/* Add spacing above the Quick Actions section */
+.clinic-view[data-page="overview"] > .workspace-panel:last-child {
+    margin-top: 24px;
 }

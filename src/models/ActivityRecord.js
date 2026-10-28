@@ -58,6 +58,7 @@ const activityRecordSchema = new mongoose.Schema(
                 'walking',
                 'running',
                 'resting',
+                'sleeping',
                 'inactive',
                 'unknown'
             ],

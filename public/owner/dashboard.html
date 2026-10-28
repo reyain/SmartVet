@@ -83,6 +83,14 @@
                     <span>Feeding History</span>
                 </button>
 
+                <button
+                    type="button"
+                    class="nav-item"
+                    data-view="activity">
+                    <span class="nav-icon" aria-hidden="true">🐾</span>
+                    <span>Activity Monitoring</span>
+                </button>
+
 
                 <button
                     type="button"
@@ -364,6 +372,88 @@
                 </div>
             </section>
 
+            <!-- ACTIVITY MONITORING VIEW -->
+            <section
+                class="owner-view"
+                id="activitySection"
+                data-page="activity"
+                hidden>
+
+                <div class="page-heading">
+                    <div>
+                        <p class="page-eyebrow">PET WELLNESS</p>
+                        <h1>Activity Monitoring</h1>
+                        <p class="muted">
+                            Monitor movement activity reported by the smart collar
+                            while your pet is away from you.
+                        </p>
+                    </div>
+
+                    <button
+                        id="refreshOwnerActivityButton"
+                        class="secondary-button"
+                        type="button">
+                        Refresh Activity
+                    </button>
+                </div>
+
+                <section class="workspace-panel">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Your Pet's Activity</h2>
+                            <p class="muted">
+                                View activity readings reported by collars assigned
+                                to your pets.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="owner-feeding-filters">
+                        <label for="ownerActivityPetFilter">
+                            Filter by pet
+                            <select id="ownerActivityPetFilter">
+                                <option value="">All my pets</option>
+                            </select>
+                        </label>
+
+                        <label for="ownerActivityTypeFilter">
+                            Filter by activity
+                            <select id="ownerActivityTypeFilter">
+                                <option value="">All activities</option>
+                                <option value="walking">Walking</option>
+                                <option value="running">Running</option>
+                                <option value="resting">Resting</option>
+                                <option value="sleeping">Sleeping</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="unknown">Unknown</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <p
+                        id="ownerActivitySummary"
+                        class="message"
+                        role="status"
+                        aria-live="polite">
+                        Activity history has not been loaded yet.
+                    </p>
+
+                    <div
+                        id="ownerActivityRecordsList"
+                        class="activity-records-list"
+                        aria-live="polite"
+                        aria-busy="false">
+                        <div class="empty-state">
+                            Open Activity Monitoring to load your pets' activity records.
+                        </div>
+                    </div>
+
+                    <p class="form-help">
+                        Activity readings depend on data reported by a connected collar.
+                        Simulated test records are not actual sensor measurements.
+                    </p>
+                </section>
+            </section>
 
             <!-- NOTIFICATIONS VIEW -->
             <section class="owner-view" id="notificationsSection" data-page="notifications" hidden>

@@ -374,6 +374,7 @@ router.post(
                 'walking',
                 'running',
                 'resting',
+                'sleeping',
                 'inactive',
                 'unknown'
             ])
