@@ -397,6 +397,11 @@ body[data-theme="dark"] .session-badge.is-verified {
     box-shadow: var(--clay-shadow);
 }
 
+/* Add spacing between consecutive workspace panels */
+.workspace-panel + .workspace-panel {
+    margin-top: 24px;
+}
+
 .section-heading {
     display: flex;
     align-items: center;
@@ -1641,4 +1646,144 @@ body[data-theme="dark"] #devicesSection .device-status-revoked {
 /* Add spacing above the Quick Actions section */
 .clinic-view[data-page="overview"] > .workspace-panel:last-child {
     margin-top: 24px;
+}
+
+/* ==========================================
+   SCAN PET QR PROFILE SIDE-BY-SIDE FIX
+   ========================================== */
+
+.qr-pet-profile {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+    margin: 20px 0;
+}
+
+.qr-pet-photo-container {
+    width: 100%;
+}
+
+.qr-pet-photo {
+    display: block;
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 16px;
+    background-color: #f1f3f5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.qr-photo-placeholder {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    border: 2px dashed rgba(180, 205, 230, 0.8);
+    border-radius: 16px;
+    background: rgba(230, 242, 252, 0.4);
+    color: var(--clay-muted);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.qr-pet-details h2 {
+    margin: 0 0 4px;
+    color: var(--clay-heading);
+    font-size: 1.4rem;
+}
+
+.qr-pet-details #qrPetCode {
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.qr-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+    margin: 16px 0 0;
+    padding: 0;
+}
+
+.qr-details-grid dt {
+    color: var(--clay-muted); /* Automatically adapts: darker muted for light mode, soft light-blue for dark mode */
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.qr-details-grid dd {
+    margin: 0;
+    color: var(--clay-heading); /* Automatically adapts: deep dark heading for light mode, brilliant light heading for dark mode */
+    font-size: 1rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+/* Explicit dark mode safety override for high contrast */
+body[data-theme="dark"] .qr-details-grid dt {
+    color: #a7b8cc;
+}
+
+body[data-theme="dark"] .qr-details-grid dd {
+    color: #f1f5fb;
+}
+
+/* Three Bottom Action Buttons Styling */
+.qr-pet-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px solid rgba(210, 225, 240, 0.7);
+}
+
+/* 1. View Owner Details (Informational / Neutral action -> Secondary look) */
+#qrOwnerDetailsButton {
+    color: var(--clay-heading);
+    background: var(--clay-surface-card);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: var(--clay-shadow-sm);
+}
+
+/* 2. Add Vaccination Record (Primary write/creation action -> Primary gradient) */
+#qrAddVaccinationButton {
+    color: white;
+    background: linear-gradient(135deg, #248ce6, #2d65e2);
+    box-shadow: var(--clay-shadow-button);
+}
+
+/* 3. Vaccination History (Review / Diagnostic action -> Distinct clean accent or soft slate) */
+#qrVaccinationHistoryButton {
+    color: rgb(7 149 58);
+    background: rgb(23 187 83 / 28%);
+    border-color: rgb(6 163 69);
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 760px) {
+    .qr-pet-profile {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .qr-pet-photo,
+    .qr-photo-placeholder {
+        width: 100%;
+        max-width: 240px;
+        height: 200px;
+        margin: 0 auto 16px;
+    }
+    .qr-details-grid {
+        grid-template-columns: 1fr;
+    }
+    .qr-pet-actions {
+        flex-direction: column;
+    }
+    .qr-pet-actions button {
+        width: 100%;
+    }
 }

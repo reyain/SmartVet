@@ -1285,29 +1285,51 @@ main.owner-main {
     max-width: 100%;
 }
 
-/* Automatically adapt pet cards to the available width */
-.pet-grid {
-    display: grid;
-    grid-template-columns: repeat(
-        auto-fit,
-        minmax(min(100%, 280px), 1fr)
-    );
-    gap: 18px;
+/* Pet Card - Left-aligned grid placement, centered internal contents */
+.pet-card {
     width: 100%;
-    min-width: 0;
+    max-width: 360px;
+    padding: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 22px;
+    background: var(--clay-surface-card);
+    box-shadow: var(--clay-shadow-sm);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers the image, text, and buttons inside the card */
+    text-align: center; /* Centers the text readability */
 }
 
-.pet-card {
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
+.pet-card:hover {
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: var(--clay-shadow);
+}
+
+.pet-card img.registered-pet-photo {
+    display: block;
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 16px;
+    margin: 0 auto 16px auto; /* Centers the photo */
+    background-color: #f1f3f5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pet-card h3,
+.pet-card p {
+    width: 100%;
+    text-align: center; /* Centers pet name, species, breed, etc. */
     overflow-wrap: anywhere;
 }
 
-.pet-card img {
-    max-width: 100%;
-    height: auto;
-    object-fit: contain;
+.pet-card .pet-status {
+    margin-top: 12px;
+    align-self: center; /* Centers the status badge */
 }
 
 /* Medium screens */

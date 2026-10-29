@@ -1749,15 +1749,23 @@ function displayScannedPet(pet) {
         : 'Not provided';
 
     qrPetStatusBadge.textContent = pet.registrationStatus || 'Unknown';
-
+    
+    // Apply green success color if approved
+    if ((pet.registrationStatus || '').toLowerCase() === 'approved') {
+        qrPetStatusBadge.classList.add('is-verified');
+    } else {
+        qrPetStatusBadge.classList.remove('is-verified');
+    }
     qrPetProfilePanel.hidden = false;
 
     if (pet.id && pet.photoEndpoint) {
         loadScannedPetPhoto(pet.id);
     } else {
-        qrPetPhoto.hidden = true;
         qrPetPhoto.removeAttribute('src');
-        qrPetPhotoPlaceholder.hidden = false;
+        qrPetPhoto.hidden = true;
+        if (qrPetPhotoPlaceholder) {
+            qrPetPhotoPlaceholder.hidden = false;
+        }
     }
 }
 
@@ -2110,6 +2118,7 @@ document.querySelectorAll('[data-close-dialog]').forEach((button) => {
 
 
 // Load the pet photograph through the protected clinic photo endpoint.
+// Load the pet photograph through the protected clinic photo endpoint.
 async function loadScannedPetPhoto(petId) {
     try {
         const response = await fetch(
@@ -2136,11 +2145,15 @@ async function loadScannedPetPhoto(petId) {
         qrPetPhotoObjectUrl = URL.createObjectURL(imageBlob);
         qrPetPhoto.src = qrPetPhotoObjectUrl;
         qrPetPhoto.hidden = false;
-        qrPetPhotoPlaceholder.hidden = true;
+        if (qrPetPhotoPlaceholder) {
+            qrPetPhotoPlaceholder.hidden = true;
+        }
     } catch {
         qrPetPhoto.removeAttribute('src');
         qrPetPhoto.hidden = true;
-        qrPetPhotoPlaceholder.hidden = false;
+        if (qrPetPhotoPlaceholder) {
+            qrPetPhotoPlaceholder.hidden = false;
+        }
     }
 }
 
