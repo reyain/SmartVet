@@ -122,15 +122,6 @@
                     <span class="theme-toggle-label">Dark mode</span>
                 </button>
             </div>
-
-
-            <div class="sidebar-footer">
-                <span class="sidebar-status-dot"></span>
-                <div>
-                    <strong>Portal active</strong>
-                    <p>SmartVet Owner System</p>
-                </div>
-            </div>
         </aside>
 
         <!-- Main Workspace Area -->
@@ -220,73 +211,91 @@
                 </div>
 
                 <div class="workspace-panel">
-                    <form id="petRegistrationForm">
-                        <div class="form-grid">
-                            <div class="form-field">
-                                <label for="petName">Pet name *</label>
-                                <input id="petName" name="name" type="text" maxlength="100" required placeholder="e.g. Buddy">
+                    <form id="petRegistrationForm" class="account-profile-grid">
+                        
+                        <!-- Left Side: Pet Photo Card (2x2 preview style) -->
+                        <div class="account-photo-card">
+                            <div class="account-avatar pet-avatar-badge">
+                                <span id="petAvatarInitial">🐾</span>
                             </div>
 
-                            <div class="form-field">
-                                <label for="species">Species *</label>
-                                <select id="species" name="species" required>
-                                    <option value="">Select species</option>
-                                    <option value="dog">Dog</option>
-                                    <option value="cat">Cat</option>
-                                    <option value="rabbit">Rabbit</option>
-                                    <option value="bird">Bird</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
+                            <div class="account-photo-controls">
+                                <label for="petPhoto" class="secondary-button photo-file-label">
+                                    Choose photo
+                                </label>
+                                <input id="petPhoto" name="petPhoto" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+                                
+                                <span id="petPhotoFileName" class="form-help">No file chosen</span>
+                                
+                                <!-- 2x2 Square Preview Box -->
+                                <div id="petPhotoPreviewContainer" class="account-photo-preview-box" hidden>
+                                    <img id="petPhotoPreview" alt="Selected pet photo preview">
+                                </div>
 
-                            <div class="form-field">
-                                <label for="breed">Breed</label>
-                                <input id="breed" name="breed" type="text" maxlength="100" placeholder="e.g. Golden Retriever">
-                            </div>
-
-                            <div class="form-field">
-                                <label for="sex">Sex</label>
-                                <select id="sex" name="sex">
-                                    <option value="unknown">Unknown</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                </select>
-                            </div>
-
-                            <div class="form-field">
-                                <label for="dateOfBirth">Date of birth</label>
-                                <input id="dateOfBirth" name="dateOfBirth" type="date">
-                            </div>
-
-                            <div class="form-field">
-                                <label for="color">Color / markings</label>
-                                <input id="color" name="color" type="text" maxlength="100" placeholder="e.g. Brown with white chest">
+                                <button id="removePetPhotoButton" class="secondary-button" type="button" style="width:100%;" hidden>
+                                    Remove Photo
+                                </button>
                             </div>
                         </div>
 
-                        <div class="form-field pet-photo-field">
-                            <label for="petPhoto">Pet photo (optional)</label>
-                            <input id="petPhoto" name="petPhoto" type="file" accept="image/jpeg,image/png,image/webp">
-                            <p class="form-help">JPG, PNG, or WebP. Maximum file size: 5 MB.</p>
-                            <div id="petPhotoPreviewContainer" class="pet-photo-preview-container" hidden>
-                                <img id="petPhotoPreview" class="pet-photo-preview" alt="Selected pet photo preview">
-                                <p id="petPhotoFileName" class="form-help"></p>
-                                <button id="removePetPhotoButton" class="secondary-button" type="button">Remove Photo</button>
+                        <!-- Right Side: Form Fields -->
+                        <div class="account-form-side">
+                            <div class="form-grid" style="grid-template-columns: 1fr;">
+                                <div class="form-field">
+                                    <label for="petName">Pet name *</label>
+                                    <input id="petName" name="name" type="text" maxlength="100" required placeholder="e.g. Buddy">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="species">Species *</label>
+                                    <select id="species" name="species" required>
+                                        <option value="">Select species</option>
+                                        <option value="dog">Dog</option>
+                                        <option value="cat">Cat</option>
+                                        <option value="rabbit">Rabbit</option>
+                                        <option value="bird">Bird</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="breed">Breed</label>
+                                    <input id="breed" name="breed" type="text" maxlength="100" placeholder="e.g. Golden Retriever">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="sex">Sex</label>
+                                    <select id="sex" name="sex">
+                                        <option value="unknown">Unknown</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="dateOfBirth">Date of birth</label>
+                                    <input id="dateOfBirth" name="dateOfBirth" type="date">
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="color">Color / markings</label>
+                                    <input id="color" name="color" type="text" maxlength="100" placeholder="e.g. Brown with white chest">
+                                </div>
                             </div>
-                        </div>
 
-                        <p class="form-help">Fields marked * are required.</p>
+                            <p class="form-help">Fields marked * are required.</p>
 
-                        <p id="registrationMessage" class="message" role="status" aria-live="polite"></p>
+                            <p id="registrationMessage" class="message" role="status" aria-live="polite"></p>
 
-                        <div class="form-actions">
-                            <button id="registerPetButton" class="primary-button" type="submit">
-                                Submit Registration
-                            </button>
+                            <div class="form-actions">
+                                <button id="registerPetButton" class="primary-button" type="submit">
+                                    Submit Registration
+                                </button>
 
-                            <button id="resetFormButton" class="secondary-button" type="reset">
-                                Clear Form
-                            </button>
+                                <button id="resetFormButton" class="secondary-button" type="reset">
+                                    Clear Form
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>

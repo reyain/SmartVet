@@ -49,6 +49,11 @@ const overviewPetsCount = document.getElementById('overviewPetsCount');
 const overviewUnreadCount = document.getElementById('overviewUnreadCount');
 
 let ownerVerified = false;
+
+
+
+
+
 // Pet photo selection and local preview.
 const petPhotoInput = document.getElementById('petPhoto');
 const petPhotoPreviewContainer = document.getElementById('petPhotoPreviewContainer');
@@ -64,8 +69,9 @@ function clearPetPhotoPreview() {
     }
     if (petPhotoInput) petPhotoInput.value = '';
     if (petPhotoPreview) petPhotoPreview.removeAttribute('src');
-    if (petPhotoFileName) petPhotoFileName.textContent = '';
+    if (petPhotoFileName) petPhotoFileName.textContent = 'No file chosen';
     if (petPhotoPreviewContainer) petPhotoPreviewContainer.hidden = true;
+    if (removePetPhotoButton) removePetPhotoButton.hidden = true;
 }
 
 if (petPhotoInput && petPhotoPreviewContainer && petPhotoPreview && petPhotoFileName) {
@@ -76,8 +82,9 @@ if (petPhotoInput && petPhotoPreviewContainer && petPhotoPreview && petPhotoFile
             petPhotoPreviewUrl = null;
         }
         petPhotoPreview.removeAttribute('src');
-        petPhotoFileName.textContent = '';
+        petPhotoFileName.textContent = 'No file chosen';
         petPhotoPreviewContainer.hidden = true;
+        if (removePetPhotoButton) removePetPhotoButton.hidden = true;
         if (!file) return;
 
         const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -96,6 +103,7 @@ if (petPhotoInput && petPhotoPreviewContainer && petPhotoPreview && petPhotoFile
         petPhotoPreview.src = petPhotoPreviewUrl;
         petPhotoFileName.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
         petPhotoPreviewContainer.hidden = false;
+        if (removePetPhotoButton) removePetPhotoButton.hidden = false;
         showMessage(registrationMessage, '');
     });
 
@@ -108,13 +116,7 @@ if (petPhotoInput && petPhotoPreviewContainer && petPhotoPreview && petPhotoFile
 
     if (registrationForm) {
         registrationForm.addEventListener('reset', () => {
-            if (petPhotoPreviewUrl) {
-                URL.revokeObjectURL(petPhotoPreviewUrl);
-                petPhotoPreviewUrl = null;
-            }
-            if (petPhotoPreview) petPhotoPreview.removeAttribute('src');
-            if (petPhotoFileName) petPhotoFileName.textContent = '';
-            if (petPhotoPreviewContainer) petPhotoPreviewContainer.hidden = true;
+            clearPetPhotoPreview();
         });
     }
 }

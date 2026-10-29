@@ -761,11 +761,11 @@ button:disabled {
 }
 
 /* Pet photo on the My Registered Pets cards */
+/* Pet photo on the My Registered Pets cards */
 .registered-pet-photo {
     display: block;
-    width: 100%;
-    max-width: 240px;
-    height: 190px;
+    width: 140px;
+    height: 140px;
     object-fit: cover;
     object-position: center;
     border-radius: 16px;
@@ -1491,4 +1491,13 @@ body.theme-transitioning * {
     .account-profile-grid {
         grid-template-columns: minmax(0, 1fr);
     }
+}
+
+/* ==========================================
+   PET REGISTRATION SIDE-BY-SIDE 2x2 FIX
+   ========================================== */
+.pet-avatar-badge {
+    display: grid;
+    place-items: center;
+    font-size: 2.5rem;
 }
